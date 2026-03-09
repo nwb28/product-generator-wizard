@@ -5,6 +5,13 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: generator-contract-gate-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   contract-gate:
     runs-on: ubuntu-latest
@@ -45,11 +52,15 @@ jobs:
       - name: Upload review document artifact
         uses: actions/upload-artifact@v4
         with:
-          name: review-document
+          name: review-document-${{ github.run_number }}
           path: .tmp/generator-output/review/human-review.md
+          retention-days: 30
+          if-no-files-found: error
 
       - name: Upload diagnostics artifact
         uses: actions/upload-artifact@v4
         with:
-          name: diagnostics
+          name: diagnostics-${{ github.run_number }}
           path: .tmp/diagnostics.txt
+          retention-days: 14
+          if-no-files-found: error
