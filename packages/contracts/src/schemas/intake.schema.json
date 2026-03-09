@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://product-generator-wizard.dev/schemas/intake/v1/intake.schema.json",
+  "title": "Product Generator Intake v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "product",
+    "controlPlane",
+    "permissions",
+    "canonicalModel",
+    "securityEvidence",
+    "integrations"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "productType", "ownerTeam", "tenant"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "productType": { "type": "string", "minLength": 1 },
+        "ownerTeam": { "type": "string", "minLength": 1 },
+        "tenant": { "type": "string", "minLength": 1 }
+      }
+    },
+    "controlPlane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["connectionType", "apiSurface", "operations"],
+      "properties": {
+        "connectionType": { "type": "string", "minLength": 1 },
+        "apiSurface": { "type": "string", "minLength": 1 },
+        "operations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bucs", "firm", "company"],
+      "properties": {
+        "bucs": { "$ref": "#/$defs/rolePermissionMappings" },
+        "firm": { "$ref": "#/$defs/rolePermissionMappings" },
+        "company": { "$ref": "#/$defs/rolePermissionMappings" }
+      }
+    },
+    "canonicalModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mappings"],
+      "properties": {
+        "mappings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["sourceField", "targetField", "confidence"],
+            "properties": {
+              "sourceField": { "type": "string", "minLength": 1 },
+              "targetField": { "type": "string", "minLength": 1 },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+            }
+          }
+        }
+      }
+    },
+    "securityEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataClassification", "pii", "threatModel", "evidenceLinks"],
+      "properties": {
+        "dataClassification": { "type": "string", "minLength": 1 },
+        "pii": { "type": "boolean" },
+        "threatModel": { "type": "string", "minLength": 1 },
+        "evidenceLinks": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "integrations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workforce", "excelPlugin"],
+      "properties": {
+        "workforce": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "provider": { "type": "string", "minLength": 1 },
+            "syncMode": { "type": "string", "minLength": 1 }
+          }
+        },
+        "excelPlugin": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "templateVersion": { "type": "string", "minLength": 1 },
+            "distributionChannel": { "type": "string", "minLength": 1 }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "workforce": {
+                "type": "object",
+                "properties": {
+                  "enabled": { "const": true }
+                },
+                "required": ["enabled"]
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "workforce": {
+                "type": "object",
+                "required": ["provider", "syncMode"],
+                "properties": {
+                  "provider": { "type": "string", "minLength": 1 },
+                  "syncMode": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "excelPlugin": {
+                "type": "object",
+                "properties": {
+                  "enabled": { "const": true }
+                },
+                "required": ["enabled"]
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "excelPlugin": {
+                "type": "object",
+                "required": ["templateVersion", "distributionChannel"],
+                "properties": {
+                  "templateVersion": { "type": "string", "minLength": 1 },
+                  "distributionChannel": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "rolePermissionMappings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "permissions"],
+        "properties": {
+          "role": { "type": "string", "minLength": 1 },
+          "permissions": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}

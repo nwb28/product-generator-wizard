@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "product": {
+    "id": "pilot-product-01",
+    "name": "Pilot Product",
+    "productType": "note-payable",
+    "ownerTeam": "product-generator",
+    "tenant": "contoso"
+  },
+  "controlPlane": {
+    "connectionType": "api",
+    "apiSurface": "rest",
+    "operations": ["create", "update", "list"]
+  },
+  "permissions": {
+    "bucs": [{ "role": "bucs-admin", "permissions": ["read", "write"] }],
+    "firm": [{ "role": "firm-operator", "permissions": ["read"] }],
+    "company": [{ "role": "company-admin", "permissions": ["read", "approve"] }]
+  },
+  "canonicalModel": {
+    "mappings": [
+      { "sourceField": "principalAmount", "targetField": "loan.principal", "confidence": 0.96 }
+    ]
+  },
+  "securityEvidence": {
+    "dataClassification": "confidential",
+    "pii": false,
+    "threatModel": "tm-2026-001",
+    "evidenceLinks": ["https://example.test/evidence/threat-model"]
+  },
+  "integrations": {
+    "workforce": {
+      "enabled": true,
+      "provider": "workday",
+      "syncMode": "near-real-time"
+    },
+    "excelPlugin": {
+      "enabled": true,
+      "templateVersion": "v3",
+      "distributionChannel": "internal-store"
+    }
+  }
+}
