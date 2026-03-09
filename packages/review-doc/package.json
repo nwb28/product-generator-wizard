@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "node --test dist/**/*.test.js",
+    "test": "node --test \"dist/**/*.test.js\"",
     "lint": "node -e \"console.log('lint placeholder')\"",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
