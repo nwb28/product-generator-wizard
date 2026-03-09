@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
-    "test": "node --test \"dist/**/*.test.js\"",
+    "test": "node ../../tools/run-node-tests.mjs dist",
     "lint": "node -e \"console.log('lint placeholder')\"",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
