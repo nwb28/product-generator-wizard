@@ -1,0 +1,24 @@
+{
+  "name": "product-generator-wizard",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Standalone Product Generator Wizard monorepo",
+  "workspaces": [
+    "apps/*",
+    "tools/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run --workspaces build",
+    "test": "npm run --workspaces test",
+    "lint": "npm run --workspaces lint",
+    "typecheck": "npm run --workspaces typecheck"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}
