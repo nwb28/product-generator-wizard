@@ -5,6 +5,7 @@ import intake from '@pgw/packages-contracts/dist/examples/intake.valid.v1.json' 
 import type { AuditEvent } from './audit.js';
 import { signTestToken } from './auth.js';
 import { createRateLimiter } from './rate-limit.js';
+import type { TelemetryClient } from './telemetry.js';
 import { createApp } from './server.js';
 
 const app = createApp();
@@ -192,4 +193,35 @@ test('audit logger emits structured events for authz deny and generate replay', 
   );
   assert.ok(replayEvent);
   assert.equal(replayEvent?.tenantId, 'tenant-audit');
+});
+
+test('telemetry client captures request count and latency metrics', async () => {
+  const counters: Array<{ name: string; value: number; attributes: Record<string, unknown> }> = [];
+  const histograms: Array<{ name: string; value: number; attributes: Record<string, unknown> }> = [];
+
+  const telemetry: TelemetryClient = {
+    startSpan() {
+      return { end() {} };
+    },
+    recordCounter(name, value, attributes) {
+      counters.push({ name, value, attributes });
+    },
+    recordHistogram(name, value, attributes) {
+      histograms.push({ name, value, attributes });
+    }
+  };
+
+  const telemetryApp = createApp({ telemetry });
+  const response = await supertest(telemetryApp).post('/validate').send(intake);
+  assert.equal(response.status, 200);
+
+  assert.ok(counters.some((entry) => entry.name === 'wizard_api_requests_total' && entry.value === 1));
+  assert.ok(
+    histograms.some(
+      (entry) =>
+        entry.name === 'wizard_api_request_duration_ms' &&
+        typeof entry.value === 'number' &&
+        entry.attributes.path === '/validate'
+    )
+  );
 });

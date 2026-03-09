@@ -7,22 +7,41 @@ import { authenticatePrincipal, hasWizardAccess } from './auth.js';
 import { createAuditLogger, resolveRequestId, type AuditLogger, type AuditOutcome } from './audit.js';
 import { createIdempotencyStore, fingerprintPayload } from './idempotency.js';
 import { createRateLimiter, type RateLimiter } from './rate-limit.js';
+import { createTelemetryClient, type TelemetryClient, type TelemetrySpan } from './telemetry.js';
 
 type AppOptions = {
   rateLimiter?: RateLimiter;
   auditLogger?: AuditLogger;
+  telemetry?: TelemetryClient;
 };
 
 export function createApp(options: AppOptions = {}) {
   const app = express();
   app.use(express.json({ limit: '1mb' }));
   const auditLogger = options.auditLogger ?? createAuditLogger();
+  const telemetry = options.telemetry ?? createTelemetryClient();
   const rateLimiter = options.rateLimiter ?? createRateLimiter({
     maxRequests: readEnvPositiveInteger('WIZARD_RATE_LIMIT_MAX_PER_MINUTE', process.env.NODE_ENV === 'test' ? 10_000 : 120),
     windowMs: 60_000
   });
   const idempotencyStore = createIdempotencyStore({
     ttlMs: readEnvPositiveInteger('WIZARD_IDEMPOTENCY_TTL_MS', 86_400_000)
+  });
+
+  app.use((req, res, next) => {
+    const span = telemetry.startSpan('http.server.request', {
+      method: req.method,
+      path: req.path
+    });
+    const started = Date.now();
+
+    res.once('finish', () => {
+      const statusCode = res.statusCode;
+      const outcome = statusCode === 429 ? 'throttled' : statusCode >= 500 ? 'error' : 'success';
+      finalizeTelemetry(telemetry, span, started, statusCode, req.path, req.method, outcome);
+    });
+
+    next();
   });
 
   app.get('/authz/wizard-entry', async (req, res) => {
@@ -379,4 +398,20 @@ function emitAudit(
     detail: details.detail,
     at: new Date().toISOString()
   });
+}
+
+function finalizeTelemetry(
+  telemetry: TelemetryClient,
+  span: TelemetrySpan,
+  startedAtMs: number,
+  statusCode: number,
+  path: string,
+  method: string,
+  outcome: 'success' | 'error' | 'throttled'
+): void {
+  const durationMs = Math.max(0, Date.now() - startedAtMs);
+  const attrs = { method, path, statusCode, outcome };
+  telemetry.recordCounter('wizard_api_requests_total', 1, attrs);
+  telemetry.recordHistogram('wizard_api_request_duration_ms', durationMs, attrs);
+  span.end({ statusCode, outcome });
 }
