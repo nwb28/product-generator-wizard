@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import supertest from 'supertest';
 import intake from '@pgw/packages-contracts/dist/examples/intake.valid.v1.json' with { type: 'json' };
+import type { AuditEvent } from './audit.js';
 import { signTestToken } from './auth.js';
 import { createRateLimiter } from './rate-limit.js';
 import { createApp } from './server.js';
@@ -151,4 +152,44 @@ test('POST /generate returns 409 when idempotency key is reused with different p
   assert.equal(second.status, 409);
   assert.equal(second.headers['x-idempotency-status'], 'conflict');
   assert.match(second.body.message, /different request payload/);
+});
+
+test('audit logger emits structured events for authz deny and generate replay', async () => {
+  const events: AuditEvent[] = [];
+  const auditedApp = createApp({
+    auditLogger: {
+      emit(event) {
+        events.push(event);
+      }
+    }
+  });
+  const token = await authHeader();
+
+  const denied = await supertest(auditedApp).get('/authz/wizard-entry');
+  assert.equal(denied.status, 403);
+
+  const firstGenerate = await supertest(auditedApp)
+    .post('/generate')
+    .set('authorization', token)
+    .set('x-tenant-id', 'tenant-audit')
+    .set('idempotency-key', 'audit-generate-001')
+    .send(intake);
+  assert.equal(firstGenerate.status, 200);
+
+  const replayedGenerate = await supertest(auditedApp)
+    .post('/generate')
+    .set('authorization', token)
+    .set('x-tenant-id', 'tenant-audit')
+    .set('idempotency-key', 'audit-generate-001')
+    .send(intake);
+  assert.equal(replayedGenerate.status, 200);
+
+  const denyEvent = events.find((event) => event.eventType === 'wizard-authz' && event.outcome === 'deny');
+  assert.ok(denyEvent);
+
+  const replayEvent = events.find(
+    (event) => event.eventType === 'wizard-operation' && event.action === 'generate' && event.outcome === 'replayed'
+  );
+  assert.ok(replayEvent);
+  assert.equal(replayEvent?.tenantId, 'tenant-audit');
 });
