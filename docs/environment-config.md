@@ -9,7 +9,9 @@
 
 Behavior:
 - In `development` and `test`, defaults are allowed for local workflows.
-- In any other `NODE_ENV`, all three variables are required; app auth fails fast if defaults are used.
+- In `staging` and `production`, all three variables are required.
+- In `staging` and `production`, `WIZARD_AUTH_JWT_SECRET` must be at least 32 characters.
+- In `staging` and `production`, app auth fails fast if defaults are used.
 
 ### API Runtime
 - `PORT` (default: `4000`)
@@ -31,6 +33,20 @@ npm test
 - Do not use fallback defaults.
 - Rotate secret on a scheduled cadence.
 - Keep issuer and audience values immutable per environment.
+- Run `npm run config:check` in deployment pipelines before releasing.
+
+## Secret Sources
+Recommended secret flow:
+1. Store canonical secrets in cloud secret manager (Azure Key Vault or equivalent).
+2. Mirror only deployment-required values to GitHub Environment Secrets (`staging`/`production`).
+3. Scope GitHub environments with approval rules and branch protections.
+4. Avoid repository-level secrets when environment-scoped values are available.
+
+## Validation Command
+- Production/staging style validation:
+  - `npm run config:check`
+- Alternate explicit target:
+  - `node tools/validate-env.mjs --target=staging`
 
 ## CI Notes
 - CI checks run in `test` mode by default.

@@ -89,5 +89,9 @@ export function getAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig 
     );
   }
 
+  if (!['development', 'test'].includes(nodeEnv) && secret.length < 32) {
+    throw new Error('Auth configuration requires WIZARD_AUTH_JWT_SECRET to be at least 32 characters outside development/test.');
+  }
+
   return { secret, issuer, audience };
 }

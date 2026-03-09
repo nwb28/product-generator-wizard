@@ -19,3 +19,7 @@ npm install
 npm run build
 npm test
 ```
+
+## Operational Checks
+- `npm run config:check` validates production-grade secret/runtime configuration.
+- `npm run perf:baseline` runs local API load baseline and threshold checks.

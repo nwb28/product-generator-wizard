@@ -15,6 +15,7 @@
     "lint": "npm run --workspaces lint",
     "typecheck": "npm run --workspaces typecheck",
     "release:check": "node tools/release-check.mjs",
+    "config:check": "node tools/validate-env.mjs --target=production",
     "perf:baseline": "npm run build --workspace @pgw/packages-contracts && npm run build --workspace @pgw/apps-generator-api && node tools/perf-baseline.mjs",
     "smoke:api": "node tools/api-smoke.mjs",
     "smoke:ui": "node tools/ui-smoke.mjs"
