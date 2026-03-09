@@ -100,3 +100,55 @@ test('POST /generate applies rate limits per tenant identity', async () => {
     .send(intake);
   assert.equal(firstTenantB.status, 200);
 });
+
+test('POST /generate replays response when idempotency key is reused with same payload', async () => {
+  const token = await authHeader();
+  const key = 'gen-request-001';
+
+  const first = await supertest(app)
+    .post('/generate')
+    .set('authorization', token)
+    .set('x-tenant-id', 'tenant-idempotent')
+    .set('idempotency-key', key)
+    .send(intake);
+  assert.equal(first.status, 200);
+  assert.equal(first.headers['x-idempotency-status'], 'created');
+
+  const second = await supertest(app)
+    .post('/generate')
+    .set('authorization', token)
+    .set('x-tenant-id', 'tenant-idempotent')
+    .set('idempotency-key', key)
+    .send(intake);
+  assert.equal(second.status, 200);
+  assert.equal(second.headers['x-idempotency-status'], 'replayed');
+  assert.deepEqual(second.body, first.body);
+});
+
+test('POST /generate returns 409 when idempotency key is reused with different payload', async () => {
+  const token = await authHeader();
+  const key = 'gen-request-002';
+
+  const first = await supertest(app)
+    .post('/generate')
+    .set('authorization', token)
+    .set('x-tenant-id', 'tenant-idempotent-conflict')
+    .set('idempotency-key', key)
+    .send(intake);
+  assert.equal(first.status, 200);
+
+  const modifiedPayload = {
+    ...intake,
+    product: { ...intake.product, id: 'pilot-product-01-conflict' }
+  };
+
+  const second = await supertest(app)
+    .post('/generate')
+    .set('authorization', token)
+    .set('x-tenant-id', 'tenant-idempotent-conflict')
+    .set('idempotency-key', key)
+    .send(modifiedPayload);
+  assert.equal(second.status, 409);
+  assert.equal(second.headers['x-idempotency-status'], 'conflict');
+  assert.match(second.body.message, /different request payload/);
+});
