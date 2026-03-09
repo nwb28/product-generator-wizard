@@ -1,0 +1,26 @@
+{
+  "name": "@pgw/apps-generator-api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "test": "node --test dist/**/*.test.js",
+    "lint": "node -e \"console.log('lint placeholder')\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@pgw/packages-compiler": "0.1.0",
+    "@pgw/packages-review-doc": "0.1.0",
+    "@pgw/packages-scaffold-templates": "0.1.0",
+    "@pgw/packages-validator": "0.1.0",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/supertest": "^6.0.3",
+    "supertest": "^7.1.1",
+    "typescript": "^5.8.2"
+  }
+}
