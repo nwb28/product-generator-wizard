@@ -6,3 +6,4 @@ coverage/
 .env.*
 *.log
 .tmp/
+apps/wizard-ui/.test-dist/
