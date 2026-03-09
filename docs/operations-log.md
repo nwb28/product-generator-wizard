@@ -20,3 +20,7 @@
 ## Enterprise Ticket 1 - Reinstate Review Requirement
 - Restored `main` branch protection to require **1 approving review**.
 - Kept required checks: `bootstrap`, `contract-gate`.
+
+## Enterprise Ticket 9 - MVP Release Tag
+- Published release `v0.1.0` on `main`.
+- Release URL: https://github.com/nwb28/product-generator-wizard/releases/tag/v0.1.0
