@@ -1,0 +1,36 @@
+name: security-scan
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  npm-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run npm audit (high+)
+        run: npm audit --audit-level=high --json > npm-audit-report.json
+
+      - name: Upload npm audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report-${{ github.run_number }}
+          path: npm-audit-report.json
+          retention-days: 14
+          if-no-files-found: error
