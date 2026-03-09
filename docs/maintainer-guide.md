@@ -37,3 +37,6 @@ Gate sequence:
 2. Run `npm test`.
 3. Verify golden fixture hash stability.
 4. Verify pilot intake still passes `ci-check`.
+
+## Automated Release Check
+Run `npm run release:check` before merging release candidates.
