@@ -17,6 +17,12 @@ test('GET /authz/wizard-entry returns 403 without role header', async () => {
   assert.equal(response.status, 403);
 });
 
+test('GET /authz/wizard-entry returns 200 for product-generator role', async () => {
+  const response = await supertest(app).get('/authz/wizard-entry').set('x-wizard-role', 'product-generator');
+  assert.equal(response.status, 200);
+  assert.equal(response.body.authorized, true);
+});
+
 test('POST /compile returns manifest', async () => {
   const response = await supertest(app)
     .post('/compile')
@@ -34,6 +40,11 @@ test('POST /generate returns deterministic hash and files', async () => {
   assert.equal(response.status, 200);
   assert.equal(typeof response.body.deterministicHash, 'string');
   assert.ok(Array.isArray(response.body.files));
+});
+
+test('POST /generate returns 403 without authorization role', async () => {
+  const response = await supertest(app).post('/generate').send(intake);
+  assert.equal(response.status, 403);
 });
 
 test('POST /review-document returns markdown', async () => {

@@ -16,3 +16,12 @@ test('parsePrefill and applyPrefill map deep-link parameters to intake context',
   assert.equal(intake.product.tenant, 'contoso');
   assert.equal(intake.controlPlane.connectionType, 'api');
 });
+
+test('parsePrefill handles missing query parameters', () => {
+  const prefill = parsePrefill('');
+  const intake = applyPrefill({ schemaVersion: '1.0.0' }, prefill) as any;
+
+  assert.equal(intake.product.productType, undefined);
+  assert.equal(intake.product.tenant, undefined);
+  assert.equal(intake.controlPlane.connectionType, undefined);
+});
