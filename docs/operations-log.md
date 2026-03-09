@@ -16,3 +16,7 @@
 - Applied protection on `main` requiring checks: `bootstrap`, `contract-gate`.
 - Enforced admin protection and 1 required PR approval.
 - Verified protection settings through GitHub API.
+
+## Enterprise Ticket 1 - Reinstate Review Requirement
+- Restored `main` branch protection to require **1 approving review**.
+- Kept required checks: `bootstrap`, `contract-gate`.
