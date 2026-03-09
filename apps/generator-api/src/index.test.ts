@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import supertest from 'supertest';
 import intake from '@pgw/packages-contracts/dist/examples/intake.valid.v1.json' with { type: 'json' };
 import { signTestToken } from './auth.js';
+import { createRateLimiter } from './rate-limit.js';
 import { createApp } from './server.js';
 
 const app = createApp();
@@ -62,4 +63,40 @@ test('POST /review-document returns markdown', async () => {
     .send(intake);
   assert.equal(response.status, 200);
   assert.match(response.body.markdown, /Human Review Document/);
+});
+
+test('POST /generate returns 429 when tenant-principal key exceeds limit', async () => {
+  const limitedApp = createApp({ rateLimiter: createRateLimiter({ maxRequests: 1, windowMs: 60_000 }) });
+  const token = await authHeader();
+  const agent = supertest(limitedApp);
+
+  const first = await agent.post('/generate').set('authorization', token).set('x-tenant-id', 'tenant-a').send(intake);
+  assert.equal(first.status, 200);
+  assert.equal(first.headers['x-ratelimit-limit'], '1');
+  assert.equal(first.headers['x-ratelimit-remaining'], '0');
+
+  const second = await agent.post('/generate').set('authorization', token).set('x-tenant-id', 'tenant-a').send(intake);
+  assert.equal(second.status, 429);
+  assert.equal(second.headers['x-ratelimit-limit'], '1');
+  assert.equal(second.body.message, 'Rate limit exceeded. Retry later.');
+});
+
+test('POST /generate applies rate limits per tenant identity', async () => {
+  const limitedApp = createApp({ rateLimiter: createRateLimiter({ maxRequests: 1, windowMs: 60_000 }) });
+  const token = await authHeader();
+  const agent = supertest(limitedApp);
+
+  const firstTenantA = await agent
+    .post('/generate')
+    .set('authorization', token)
+    .set('x-tenant-id', 'tenant-a')
+    .send(intake);
+  assert.equal(firstTenantA.status, 200);
+
+  const firstTenantB = await agent
+    .post('/generate')
+    .set('authorization', token)
+    .set('x-tenant-id', 'tenant-b')
+    .send(intake);
+  assert.equal(firstTenantB.status, 200);
 });
