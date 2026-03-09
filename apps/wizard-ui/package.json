@@ -4,8 +4,11 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "node --test dist/**/*.test.js",
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "build:test": "tsc -p tsconfig.test.json",
+    "preview": "vite preview",
+    "test": "npm run build:test && node --test .test-dist/**/*.test.js",
     "lint": "node -e \"console.log('lint placeholder')\"",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
@@ -16,6 +19,8 @@
   "devDependencies": {
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "typescript": "^5.8.2"
+    "@vitejs/plugin-react": "^4.4.1",
+    "typescript": "^5.8.2",
+    "vite": "^5.4.14"
   }
 }
