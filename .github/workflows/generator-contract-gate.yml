@@ -1,0 +1,55 @@
+name: generator-contract-gate
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  contract-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build workspace
+        run: npm run build
+
+      - name: Validate intake (blocking gate)
+        run: node tools/generator-cli/dist/index.js validate fixtures/golden/pilot-intake.json
+
+      - name: Run CI check (fails on blocking diagnostics)
+        run: node tools/generator-cli/dist/index.js ci-check fixtures/golden/pilot-intake.json
+
+      - name: Generate package in temp workspace
+        run: |
+          mkdir -p .tmp/generator-output
+          node tools/generator-cli/dist/index.js generate fixtures/golden/pilot-intake.json --out .tmp/generator-output
+
+      - name: Run scaffold contract tests
+        run: npm test --workspace @pgw/packages-scaffold-templates
+
+      - name: Produce diagnostics artifact
+        run: |
+          node tools/generator-cli/dist/index.js validate fixtures/golden/pilot-intake.json > .tmp/diagnostics.txt
+
+      - name: Upload review document artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-document
+          path: .tmp/generator-output/review/human-review.md
+
+      - name: Upload diagnostics artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics
+          path: .tmp/diagnostics.txt
