@@ -1,0 +1,19 @@
+# Global fallback owner
+* @nwb28
+
+# Application surfaces
+/apps/generator-api/ @nwb28
+/apps/wizard-ui/ @nwb28
+
+# Shared generation libraries
+/packages/contracts/ @nwb28
+/packages/validator/ @nwb28
+/packages/compiler/ @nwb28
+/packages/scaffold-templates/ @nwb28
+/packages/review-doc/ @nwb28
+
+# Tooling and CI
+/tools/ @nwb28
+/.github/workflows/ @nwb28
+/tests/ @nwb28
+/docs/ @nwb28
