@@ -3,18 +3,20 @@ import { compileManifest } from '@pgw/packages-compiler/dist/index.js';
 import { generateHumanReviewDocument } from '@pgw/packages-review-doc/dist/index.js';
 import { generatePilotScaffold } from '@pgw/packages-scaffold-templates/dist/index.js';
 import { toHumanSummary, validateIntake } from '@pgw/packages-validator/dist/index.js';
+import { authenticatePrincipal, hasWizardAccess } from './auth.js';
 
 export function createApp() {
   const app = express();
   app.use(express.json({ limit: '1mb' }));
 
-  app.get('/authz/wizard-entry', (req, res) => {
-    if (!hasWizardAccess(req)) {
+  app.get('/authz/wizard-entry', async (req, res) => {
+    const principal = await authenticatePrincipal(req);
+    if (!hasWizardAccess(principal)) {
       res.status(403).json({ authorized: false });
       return;
     }
 
-    res.status(200).json({ authorized: true });
+    res.status(200).json({ authorized: true, sub: principal?.sub });
   });
 
   app.post('/validate', (req, res) => {
@@ -27,8 +29,9 @@ export function createApp() {
     });
   });
 
-  app.post('/compile', (req, res) => {
-    if (!hasWizardAccess(req)) {
+  app.post('/compile', async (req, res) => {
+    const principal = await authenticatePrincipal(req);
+    if (!hasWizardAccess(principal)) {
       res.status(403).json({ message: 'Forbidden' });
       return;
     }
@@ -41,8 +44,9 @@ export function createApp() {
     }
   });
 
-  app.post('/generate', (req, res) => {
-    if (!hasWizardAccess(req)) {
+  app.post('/generate', async (req, res) => {
+    const principal = await authenticatePrincipal(req);
+    if (!hasWizardAccess(principal)) {
       res.status(403).json({ message: 'Forbidden' });
       return;
     }
@@ -56,8 +60,9 @@ export function createApp() {
     }
   });
 
-  app.post('/review-document', (req, res) => {
-    if (!hasWizardAccess(req)) {
+  app.post('/review-document', async (req, res) => {
+    const principal = await authenticatePrincipal(req);
+    if (!hasWizardAccess(principal)) {
       res.status(403).json({ message: 'Forbidden' });
       return;
     }
@@ -76,9 +81,4 @@ export function createApp() {
 
 function asMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Unknown error';
-}
-
-function hasWizardAccess(req: express.Request): boolean {
-  const role = req.header('x-wizard-role');
-  return role === 'wizard-admin' || role === 'product-generator';
 }
