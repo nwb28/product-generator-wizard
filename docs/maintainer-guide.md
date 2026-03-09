@@ -40,3 +40,6 @@ Gate sequence:
 
 ## Automated Release Check
 Run `npm run release:check` before merging release candidates.
+
+## Environment Configuration
+See `docs/environment-config.md` for required runtime variables and production auth hardening rules.
