@@ -1,0 +1,19 @@
+{
+  "name": "@pgw/packages-compiler",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test dist/**/*.test.js",
+    "lint": "node -e \"console.log('lint placeholder')\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@pgw/packages-contracts": "0.1.0",
+    "ajv": "^8.17.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}
