@@ -1,0 +1,25 @@
+{
+  "active": {
+    "intake": "1.0.0",
+    "manifest": "1.0.0"
+  },
+  "compatibility": {
+    "generator": {
+      "1.0.0": {
+        "acceptsIntake": ["1.0.0"],
+        "emitsManifest": "1.0.0"
+      }
+    },
+    "validator": {
+      "1.0.0": {
+        "supportsIntake": ["1.0.0"],
+        "supportsManifest": ["1.0.0"]
+      }
+    }
+  },
+  "policy": {
+    "breakingChange": "major",
+    "additiveChange": "minor",
+    "patchChange": "patch"
+  }
+}
