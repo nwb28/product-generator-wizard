@@ -15,7 +15,8 @@
     "lint": "npm run --workspaces lint",
     "typecheck": "npm run --workspaces typecheck",
     "release:check": "node tools/release-check.mjs",
-    "smoke:api": "node tools/api-smoke.mjs"
+    "smoke:api": "node tools/api-smoke.mjs",
+    "smoke:ui": "node tools/ui-smoke.mjs"
   },
   "engines": {
     "node": ">=20"
