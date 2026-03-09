@@ -14,7 +14,8 @@
     "test": "npm test --workspace @pgw/packages-contracts && npm test --workspace @pgw/packages-validator && npm test --workspace @pgw/packages-compiler && npm test --workspace @pgw/packages-scaffold-templates && npm test --workspace @pgw/packages-review-doc && npm test --workspace @pgw/apps-generator-api && npm test --workspace @pgw/apps-wizard-ui && npm test --workspace @pgw/tools-generator-cli && npm test --workspace @pgw/tests-e2e",
     "lint": "npm run --workspaces lint",
     "typecheck": "npm run --workspaces typecheck",
-    "release:check": "node tools/release-check.mjs"
+    "release:check": "node tools/release-check.mjs",
+    "smoke:api": "node tools/api-smoke.mjs"
   },
   "engines": {
     "node": ">=20"
