@@ -1,0 +1,26 @@
+{
+  "name": "@pgw/apps-wizard-ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "build:test": "tsc -p tsconfig.test.json",
+    "preview": "vite preview",
+    "test": "npm run build:test && node ../../tools/run-node-tests.mjs .test-dist",
+    "lint": "node -e \"console.log('lint placeholder')\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.4.1",
+    "typescript": "^5.8.2",
+    "vite": "^5.4.14"
+  }
+}

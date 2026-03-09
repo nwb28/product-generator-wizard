@@ -6,13 +6,15 @@
   "workspaces": [
     "apps/*",
     "tools/*",
-    "packages/*"
+    "packages/*",
+    "tests/*"
   ],
   "scripts": {
-    "build": "npm run --workspaces build",
-    "test": "npm run --workspaces test",
+    "build": "npm run build --workspace @pgw/packages-contracts && npm run build --workspace @pgw/packages-validator && npm run build --workspace @pgw/packages-compiler && npm run build --workspace @pgw/packages-scaffold-templates && npm run build --workspace @pgw/packages-review-doc && npm run build --workspace @pgw/apps-generator-api && npm run build --workspace @pgw/apps-wizard-ui && npm run build --workspace @pgw/tools-generator-cli && npm run build --workspace @pgw/tests-e2e",
+    "test": "npm test --workspace @pgw/packages-contracts && npm test --workspace @pgw/packages-validator && npm test --workspace @pgw/packages-compiler && npm test --workspace @pgw/packages-scaffold-templates && npm test --workspace @pgw/packages-review-doc && npm test --workspace @pgw/apps-generator-api && npm test --workspace @pgw/apps-wizard-ui && npm test --workspace @pgw/tools-generator-cli && npm test --workspace @pgw/tests-e2e",
     "lint": "npm run --workspaces lint",
-    "typecheck": "npm run --workspaces typecheck"
+    "typecheck": "npm run --workspaces typecheck",
+    "release:check": "node tools/release-check.mjs"
   },
   "engines": {
     "node": ">=20"

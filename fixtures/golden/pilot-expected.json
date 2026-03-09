@@ -1,0 +1,10 @@
+{
+  "hash": "259010e534aa695db95755261acc9ef776219f7d911226dd64ce501e7a7d950e",
+  "files": [
+    "docs/runbook.md",
+    "manifest.json",
+    "metadata/generation.json",
+    "src/index.ts",
+    "tests/contract.test.ts"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "@pgw/packages-review-doc",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node ../../tools/run-node-tests.mjs dist",
+    "lint": "node -e \"console.log('lint placeholder')\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@pgw/packages-validator": "0.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}
