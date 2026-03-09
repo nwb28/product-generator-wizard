@@ -4,7 +4,9 @@ import { execSync } from 'node:child_process';
 const steps = [
   'npm run build',
   'npm test',
-  'node tools/generator-cli/dist/index.js ci-check fixtures/golden/pilot-intake.json'
+  'node tools/generator-cli/dist/index.js ci-check fixtures/golden/pilot-intake.json',
+  'npm run perf:baseline',
+  'npm run dr:check'
 ];
 
 for (const step of steps) {
