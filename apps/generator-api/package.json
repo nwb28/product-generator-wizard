@@ -16,7 +16,8 @@
     "@pgw/packages-scaffold-templates": "0.1.0",
     "@pgw/packages-validator": "0.1.0",
     "express": "^4.21.2",
-    "jose": "^5.9.6"
+    "jose": "^5.9.6",
+    "redis": "^5.8.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",

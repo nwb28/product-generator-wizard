@@ -1,3 +1,5 @@
+import type { RedisExecutor } from './redis-executor.js';
+
 export type RateLimitCheckResult = {
   allowed: boolean;
   limit: number;
@@ -6,7 +8,7 @@ export type RateLimitCheckResult = {
 };
 
 export type RateLimiter = {
-  check(endpoint: string, key: string): RateLimitCheckResult;
+  check(endpoint: string, key: string): Promise<RateLimitCheckResult>;
 };
 
 type RateLimitCounter = {
@@ -20,6 +22,11 @@ type RateLimiterConfig = {
   now?: () => number;
 };
 
+type RedisRateLimiterConfig = RateLimiterConfig & {
+  executor: RedisExecutor;
+  keyPrefix?: string;
+};
+
 const DEFAULT_WINDOW_MS = 60_000;
 const DEFAULT_MAX_REQUESTS = 120;
 
@@ -30,7 +37,7 @@ export function createRateLimiter(config: Partial<RateLimiterConfig> = {}): Rate
   const counters = new Map<string, RateLimitCounter>();
 
   return {
-    check(endpoint, key) {
+    async check(endpoint, key) {
       const stamp = now();
       const mapKey = `${endpoint}:${key}`;
       const current = counters.get(mapKey);
@@ -54,6 +61,38 @@ export function createRateLimiter(config: Partial<RateLimiterConfig> = {}): Rate
         limit: maxRequests,
         remaining: Math.max(0, maxRequests - current.count),
         resetAtEpochSeconds: Math.ceil(current.resetAtMs / 1000)
+      };
+    }
+  };
+}
+
+export function createRedisRateLimiter(config: Partial<RedisRateLimiterConfig> & Pick<RedisRateLimiterConfig, 'executor'>): RateLimiter {
+  const now = config.now ?? Date.now;
+  const windowMs = ensurePositiveInteger(config.windowMs, DEFAULT_WINDOW_MS);
+  const maxRequests = ensurePositiveInteger(config.maxRequests, DEFAULT_MAX_REQUESTS);
+  const keyPrefix = config.keyPrefix ?? 'wizard:rate-limit';
+  const executor = config.executor;
+
+  return {
+    async check(endpoint, key) {
+      const redisKey = `${keyPrefix}:${endpoint}:${key}`;
+      const count = await executor.run(async (client) => await client.incr(redisKey));
+      if (count === 1) {
+        await executor.run(async (client) => await client.pExpire(redisKey, windowMs));
+      }
+
+      let ttlMs = await executor.run(async (client) => await client.pTTL(redisKey));
+      if (ttlMs < 0) {
+        ttlMs = windowMs;
+        await executor.run(async (client) => await client.pExpire(redisKey, windowMs));
+      }
+
+      const resetAtEpochSeconds = Math.ceil((now() + ttlMs) / 1000);
+      return {
+        allowed: count <= maxRequests,
+        limit: maxRequests,
+        remaining: Math.max(0, maxRequests - count),
+        resetAtEpochSeconds
       };
     }
   };

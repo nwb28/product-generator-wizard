@@ -16,6 +16,11 @@ Behavior:
 ### API Runtime
 - `PORT` (default: `4000`)
 - `NODE_ENV` (`development`, `test`, `staging`, `production`)
+- `WIZARD_RATE_LIMIT_MAX_PER_MINUTE` (optional, positive integer)
+- `WIZARD_IDEMPOTENCY_TTL_MS` (optional, positive integer)
+
+### Distributed Store (Recommended for multi-instance deployments)
+- `WIZARD_REDIS_URL` (Redis connection URL, enables distributed rate limit and idempotency stores)
 
 ## Local Development
 Example:
@@ -24,6 +29,7 @@ export NODE_ENV=development
 export WIZARD_AUTH_JWT_SECRET=dev-secret
 export WIZARD_AUTH_JWT_ISSUER=product-generator-wizard
 export WIZARD_AUTH_JWT_AUDIENCE=wizard-api
+export WIZARD_REDIS_URL=redis://127.0.0.1:6379
 npm run build
 npm test
 ```

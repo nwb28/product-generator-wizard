@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import type { RedisExecutor } from './redis-executor.js';
 
 export type IdempotencyResult =
   | { kind: 'miss' }
@@ -22,13 +23,24 @@ type IdempotencyStoreConfig = {
 
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
 
-export function createIdempotencyStore(config: Partial<IdempotencyStoreConfig> = {}) {
+type RedisIdempotencyStoreConfig = IdempotencyStoreConfig & {
+  executor: RedisExecutor;
+  keyPrefix?: string;
+};
+
+export type IdempotencyStore = {
+  lookup(scope: string, key: string, fingerprint: string): Promise<IdempotencyResult>;
+  save(scope: string, key: string, fingerprint: string, response: CachedResponse): Promise<void>;
+  discard(scope: string, key: string): Promise<void>;
+};
+
+export function createIdempotencyStore(config: Partial<IdempotencyStoreConfig> = {}): IdempotencyStore {
   const ttlMs = ensurePositiveInteger(config.ttlMs, DEFAULT_TTL_MS);
   const now = config.now ?? Date.now;
   const entries = new Map<string, CacheEntry>();
 
   return {
-    lookup(scope: string, key: string, fingerprint: string): IdempotencyResult {
+    async lookup(scope: string, key: string, fingerprint: string): Promise<IdempotencyResult> {
       const mapKey = `${scope}:${key}`;
       const stamp = now();
       const current = entries.get(mapKey);
@@ -49,11 +61,71 @@ export function createIdempotencyStore(config: Partial<IdempotencyStoreConfig> =
 
       return { kind: 'hit', response: current.response };
     },
-    save(scope: string, key: string, fingerprint: string, response: CachedResponse): void {
+    async save(scope: string, key: string, fingerprint: string, response: CachedResponse): Promise<void> {
       entries.set(`${scope}:${key}`, { state: 'done', fingerprint, response, createdAtMs: now() });
     },
-    discard(scope: string, key: string): void {
+    async discard(scope: string, key: string): Promise<void> {
       entries.delete(`${scope}:${key}`);
+    }
+  };
+}
+
+export function createRedisIdempotencyStore(
+  config: Partial<RedisIdempotencyStoreConfig> & Pick<RedisIdempotencyStoreConfig, 'executor'>
+): IdempotencyStore {
+  const ttlMs = ensurePositiveInteger(config.ttlMs, DEFAULT_TTL_MS);
+  const now = config.now ?? Date.now;
+  const keyPrefix = config.keyPrefix ?? 'wizard:idempotency';
+  const executor = config.executor;
+
+  return {
+    async lookup(scope: string, key: string, fingerprint: string): Promise<IdempotencyResult> {
+      const redisKey = `${keyPrefix}:${scope}:${key}`;
+      const stamp = now();
+      const inflightValue = JSON.stringify({ state: 'inflight', fingerprint, createdAtMs: stamp });
+
+      const created = await executor.run(async (client) => await client.set(redisKey, inflightValue, { NX: true, PX: ttlMs }));
+      if (created === 'OK') {
+        return { kind: 'miss' };
+      }
+
+      const raw = await executor.run(async (client) => await client.get(redisKey));
+      if (!raw) {
+        return { kind: 'miss' };
+      }
+
+      const current = parseCacheEntry(raw);
+      if (!current) {
+        return { kind: 'conflict', message: 'Idempotency key has invalid cache state. Retry with a new key.' };
+      }
+
+      if (current.fingerprint !== fingerprint) {
+        return { kind: 'conflict', message: 'Idempotency key has already been used with a different request payload.' };
+      }
+
+      if (current.state === 'inflight') {
+        return { kind: 'conflict', message: 'An operation with this idempotency key is currently in progress.' };
+      }
+
+      return { kind: 'hit', response: current.response };
+    },
+    async save(scope: string, key: string, fingerprint: string, response: CachedResponse): Promise<void> {
+      const redisKey = `${keyPrefix}:${scope}:${key}`;
+      const value = JSON.stringify({
+        state: 'done',
+        fingerprint,
+        createdAtMs: now(),
+        response
+      });
+
+      const updated = await executor.run(async (client) => await client.set(redisKey, value, { XX: true, PX: ttlMs }));
+      if (!updated) {
+        await executor.run(async (client) => await client.set(redisKey, value, { PX: ttlMs }));
+      }
+    },
+    async discard(scope: string, key: string): Promise<void> {
+      const redisKey = `${keyPrefix}:${scope}:${key}`;
+      await executor.run(async (client) => await client.del(redisKey));
     }
   };
 }
@@ -94,5 +166,44 @@ function cleanupEntries(entries: Map<string, CacheEntry>, nowMs: number, ttlMs: 
     if (value.createdAtMs + ttlMs <= nowMs) {
       entries.delete(key);
     }
+  }
+}
+
+function parseCacheEntry(raw: string): CacheEntry | null {
+  try {
+    const parsed = JSON.parse(raw) as Partial<CacheEntry>;
+    if (!parsed || typeof parsed !== 'object') {
+      return null;
+    }
+
+    if (parsed.state === 'inflight' && typeof parsed.fingerprint === 'string' && typeof parsed.createdAtMs === 'number') {
+      return parsed as CacheEntry;
+    }
+
+    if (
+      parsed.state === 'done' &&
+      typeof parsed.fingerprint === 'string' &&
+      typeof parsed.createdAtMs === 'number' &&
+      parsed.response &&
+      typeof parsed.response === 'object'
+    ) {
+      const response = parsed.response as Partial<CachedResponse>;
+      if (typeof response.status === 'number' && 'body' in response && typeof response.createdAtMs === 'number') {
+        return {
+          state: 'done',
+          fingerprint: parsed.fingerprint,
+          createdAtMs: parsed.createdAtMs,
+          response: {
+            status: response.status,
+            body: response.body,
+            createdAtMs: response.createdAtMs
+          }
+        };
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
   }
 }

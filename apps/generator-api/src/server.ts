@@ -5,14 +5,22 @@ import { generatePilotScaffold } from '@pgw/packages-scaffold-templates/dist/ind
 import { toHumanSummary, validateIntake } from '@pgw/packages-validator/dist/index.js';
 import { authenticatePrincipal, hasWizardAccess } from './auth.js';
 import { createAuditLogger, resolveRequestId, type AuditLogger, type AuditOutcome } from './audit.js';
-import { createIdempotencyStore, fingerprintPayload } from './idempotency.js';
-import { createRateLimiter, type RateLimiter } from './rate-limit.js';
+import {
+  createIdempotencyStore,
+  createRedisIdempotencyStore,
+  fingerprintPayload,
+  type IdempotencyStore
+} from './idempotency.js';
+import { createRateLimiter, createRedisRateLimiter, type RateLimitCheckResult, type RateLimiter } from './rate-limit.js';
+import { createRedisExecutorFromEnv, type RedisExecutor } from './redis-executor.js';
 import { createTelemetryClient, type TelemetryClient, type TelemetrySpan } from './telemetry.js';
 
 type AppOptions = {
   rateLimiter?: RateLimiter;
+  idempotencyStore?: IdempotencyStore;
   auditLogger?: AuditLogger;
   telemetry?: TelemetryClient;
+  redisExecutor?: RedisExecutor | null;
 };
 
 export function createApp(options: AppOptions = {}) {
@@ -20,13 +28,22 @@ export function createApp(options: AppOptions = {}) {
   app.use(express.json({ limit: '1mb' }));
   const auditLogger = options.auditLogger ?? createAuditLogger();
   const telemetry = options.telemetry ?? createTelemetryClient();
-  const rateLimiter = options.rateLimiter ?? createRateLimiter({
-    maxRequests: readEnvPositiveInteger('WIZARD_RATE_LIMIT_MAX_PER_MINUTE', process.env.NODE_ENV === 'test' ? 10_000 : 120),
-    windowMs: 60_000
-  });
-  const idempotencyStore = createIdempotencyStore({
-    ttlMs: readEnvPositiveInteger('WIZARD_IDEMPOTENCY_TTL_MS', 86_400_000)
-  });
+  const redisExecutor = options.redisExecutor === undefined ? createRedisExecutorFromEnv() : options.redisExecutor;
+  const maxRatePerMinute = readEnvPositiveInteger(
+    'WIZARD_RATE_LIMIT_MAX_PER_MINUTE',
+    process.env.NODE_ENV === 'test' ? 10_000 : 120
+  );
+  const idempotencyTtlMs = readEnvPositiveInteger('WIZARD_IDEMPOTENCY_TTL_MS', 86_400_000);
+  const rateLimiter =
+    options.rateLimiter ??
+    (redisExecutor
+      ? createRedisRateLimiter({ executor: redisExecutor, maxRequests: maxRatePerMinute, windowMs: 60_000 })
+      : createRateLimiter({ maxRequests: maxRatePerMinute, windowMs: 60_000 }));
+  const idempotencyStore =
+    options.idempotencyStore ??
+    (redisExecutor
+      ? createRedisIdempotencyStore({ executor: redisExecutor, ttlMs: idempotencyTtlMs })
+      : createIdempotencyStore({ ttlMs: idempotencyTtlMs }));
 
   app.use((req, res, next) => {
     const span = telemetry.startSpan('http.server.request', {
@@ -49,7 +66,8 @@ export function createApp(options: AppOptions = {}) {
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
 
-    if (!applyRateLimit(res, rateLimiter.check('authz:wizard-entry', resolveRequestIdentity(req, principal?.sub)))) {
+    const rateLimit = await rateLimiter.check('authz:wizard-entry', resolveRequestIdentity(req, principal?.sub));
+    if (!applyRateLimit(res, rateLimit)) {
       emitAudit(auditLogger, {
         requestId,
         tenantId,
@@ -85,8 +103,9 @@ export function createApp(options: AppOptions = {}) {
     res.status(200).json({ authorized: true, sub: principal?.sub });
   });
 
-  app.post('/validate', (req, res) => {
-    if (!applyRateLimit(res, rateLimiter.check('validate', resolveRequestIdentity(req)))) {
+  app.post('/validate', async (req, res) => {
+    const rateLimit = await rateLimiter.check('validate', resolveRequestIdentity(req));
+    if (!applyRateLimit(res, rateLimit)) {
       return;
     }
 
@@ -103,7 +122,8 @@ export function createApp(options: AppOptions = {}) {
     const principal = await authenticatePrincipal(req);
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
-    if (!applyRateLimit(res, rateLimiter.check('compile', resolveRequestIdentity(req, principal?.sub)))) {
+    const rateLimit = await rateLimiter.check('compile', resolveRequestIdentity(req, principal?.sub));
+    if (!applyRateLimit(res, rateLimit)) {
       emitAudit(auditLogger, {
         requestId,
         tenantId,
@@ -157,7 +177,8 @@ export function createApp(options: AppOptions = {}) {
     const principal = await authenticatePrincipal(req);
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
-    if (!applyRateLimit(res, rateLimiter.check('generate', resolveRequestIdentity(req, principal?.sub)))) {
+    const rateLimit = await rateLimiter.check('generate', resolveRequestIdentity(req, principal?.sub));
+    if (!applyRateLimit(res, rateLimit)) {
       emitAudit(auditLogger, {
         requestId,
         tenantId,
@@ -211,7 +232,8 @@ export function createApp(options: AppOptions = {}) {
     const principal = await authenticatePrincipal(req);
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
-    if (!applyRateLimit(res, rateLimiter.check('review-document', resolveRequestIdentity(req, principal?.sub)))) {
+    const rateLimit = await rateLimiter.check('review-document', resolveRequestIdentity(req, principal?.sub));
+    if (!applyRateLimit(res, rateLimit)) {
       emitAudit(auditLogger, {
         requestId,
         tenantId,
@@ -278,7 +300,7 @@ function resolveTenantId(req: express.Request): string {
   return req.header('x-tenant-id') ?? req.header('x-tenant') ?? req.query.tenant?.toString() ?? 'unknown-tenant';
 }
 
-function applyRateLimit(res: express.Response, result: ReturnType<RateLimiter['check']>): boolean {
+function applyRateLimit(res: express.Response, result: RateLimitCheckResult): boolean {
   res.setHeader('X-RateLimit-Limit', String(result.limit));
   res.setHeader('X-RateLimit-Remaining', String(result.remaining));
   res.setHeader('X-RateLimit-Reset', String(result.resetAtEpochSeconds));
@@ -308,8 +330,6 @@ function readEnvPositiveInteger(name: string, fallback: number): number {
   return parsed;
 }
 
-type IdempotencyStore = ReturnType<typeof createIdempotencyStore>;
-
 async function runIdempotentJson(
   req: express.Request,
   res: express.Response,
@@ -327,7 +347,7 @@ async function runIdempotentJson(
 
   const requestFingerprint = fingerprintPayload(req.body);
   const scope = `${endpoint}:${identityScope}`;
-  const lookup = store.lookup(scope, idempotencyKey, requestFingerprint);
+  const lookup = await store.lookup(scope, idempotencyKey, requestFingerprint);
 
   if (lookup.kind === 'hit') {
     onAudit({ outcome: 'replayed' });
@@ -345,7 +365,7 @@ async function runIdempotentJson(
 
   try {
     const result = await execute();
-    store.save(scope, idempotencyKey, requestFingerprint, {
+    await store.save(scope, idempotencyKey, requestFingerprint, {
       status: result.status,
       body: result.body,
       createdAtMs: Date.now()
@@ -354,7 +374,7 @@ async function runIdempotentJson(
     res.setHeader('X-Idempotency-Status', 'created');
     res.status(result.status).json(result.body);
   } catch (error) {
-    store.discard(scope, idempotencyKey);
+    await store.discard(scope, idempotencyKey);
     onAudit({ outcome: 'failure', detail: asMessage(error) });
     res.status(400).json({ message: asMessage(error) });
   }
