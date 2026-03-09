@@ -24,3 +24,7 @@
 ## Enterprise Ticket 9 - MVP Release Tag
 - Published release `v0.1.0` on `main`.
 - Release URL: https://github.com/nwb28/product-generator-wizard/releases/tag/v0.1.0
+
+## Enterprise Ticket 1 - PR Opened
+- Opened PR #2 from `codex/enterprise-hardening-20260309` into `main`.
+- URL: https://github.com/nwb28/product-generator-wizard/pull/2
