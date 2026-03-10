@@ -66,3 +66,42 @@ test('tenant isolation: idempotency key scope is isolated by tenant', async () =
   assert.equal(tenantB.status, 200);
   assert.equal(tenantB.headers['x-idempotency-status'], 'created');
 });
+
+test('e2e contract: generation responses include backend headers', async () => {
+  const app = createApp({ auditLogger: { emit() {} } });
+  const auth = await bearer();
+
+  const response = await supertest(app)
+    .post('/generate')
+    .set('authorization', auth)
+    .set('x-tenant-id', 'tenant-header-contract')
+    .set('idempotency-key', 'header-contract-001')
+    .send(intake);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers['x-ratelimit-backend'], 'primary');
+  assert.equal(response.headers['x-idempotency-backend'], 'primary');
+});
+
+test('e2e contract: fallback backend headers are emitted when redis is unavailable', async () => {
+  const app = createApp({
+    auditLogger: { emit() {} },
+    redisExecutor: {
+      async run() {
+        throw new Error('redis unavailable');
+      }
+    }
+  });
+  const auth = await bearer();
+
+  const response = await supertest(app)
+    .post('/generate')
+    .set('authorization', auth)
+    .set('x-tenant-id', 'tenant-header-fallback')
+    .set('idempotency-key', 'header-fallback-001')
+    .send(intake);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers['x-ratelimit-backend'], 'fallback');
+  assert.equal(response.headers['x-idempotency-backend'], 'fallback');
+});
