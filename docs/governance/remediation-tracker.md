@@ -33,6 +33,7 @@
 | REM-029 | Missing operational labels for governance workflows | Low | Closed | DevOps | Bootstrapped required repository labels (`governance`, `operations`, `retention`, `branch-protection`, `security`, `compliance`). |
 | REM-030 | Governance remediation environment approval gap | Medium | Closed | DevOps | Added environment protection policy automation and enforced required reviewer with self-review prevention for `governance-remediation`. |
 | REM-031 | Workflow command reference integrity gap | Medium | Closed | DevOps | Added workflow command reference validation and enforced checks for `tools/*.mjs` and root npm scripts in CI/release gates. |
+| REM-032 | Post-merge governance bootstrap consistency gap | Medium | Closed | DevOps | Added unified governance bootstrap orchestration command, baseline config, and runbook for dry-run/apply control initialization. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.

@@ -29,7 +29,8 @@
     "sbom:generate": "mkdir -p .tmp && npm sbom --sbom-format cyclonedx --sbom-type application > .tmp/sbom.cdx.json",
     "smoke:api": "node tools/api-smoke.mjs",
     "smoke:ui": "node tools/ui-smoke.mjs",
-    "workflow:check": "node tools/verify-workflow-command-references.mjs --workflows .github/workflows --package package.json"
+    "workflow:check": "node tools/verify-workflow-command-references.mjs --workflows .github/workflows --package package.json",
+    "governance:bootstrap": "node tools/bootstrap-governance-controls.mjs --config config/governance-bootstrap.json"
   },
   "engines": {
     "node": ">=20"

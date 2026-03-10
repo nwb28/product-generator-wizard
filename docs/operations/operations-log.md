@@ -161,3 +161,8 @@
   - `npm run release:check`
   - `.github/workflows/ci.yml`
   - `.github/workflows/generator-contract-gate.yml`
+
+## Enterprise Ticket - Governance Bootstrap Runbook and Orchestration
+- Added orchestration tool `tools/bootstrap-governance-controls.mjs` to execute label/environment/branch-protection bootstrap sequence.
+- Added baseline orchestration config `config/governance-bootstrap.json`.
+- Added runbook `docs/operations/governance-bootstrap-runbook.md` and indexed it in `docs/README.md`.

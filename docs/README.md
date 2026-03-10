@@ -29,6 +29,7 @@ Documentation is organized by domain so operational and governance assets stay d
 - `docs/operations/operations-log.md`
 - `docs/operations/audit-forwarder.md`
 - `docs/operations/preview-runbook.md`
+- `docs/operations/governance-bootstrap-runbook.md`
 
 ## Governance
 - `docs/governance/contract-governance.md`
