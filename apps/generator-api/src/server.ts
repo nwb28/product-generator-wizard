@@ -5,6 +5,7 @@ import {
   analyzePermissionMatrix,
   createPilotLoanAdapter,
   createProductAdapterRegistry,
+  generateDeterministicPreviewArtifacts,
   validateBuiltProductIntake,
   validateBuiltProductWithRegistry
 } from '@pgw/packages-product-adapters/dist/index.js';
@@ -548,9 +549,11 @@ export function createApp(options: AppOptions = {}) {
       outcome: 'success',
       principalSub: principal.sub
     });
+    const artifacts = generateDeterministicPreviewArtifacts(output.previewSession);
     res.status(200).json({
       validation,
-      output
+      output,
+      artifacts
     });
   });
 

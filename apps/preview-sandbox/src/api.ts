@@ -19,6 +19,10 @@ export type PreviewSimulateResponse = {
       };
     };
   };
+  artifacts?: {
+    deterministicHash: string;
+    files: Array<{ path: string; content: string }>;
+  };
 };
 
 export async function simulatePreview(payload: unknown): Promise<PreviewSimulateResponse> {

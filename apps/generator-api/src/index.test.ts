@@ -256,6 +256,8 @@ test('POST /preview/simulate returns transformed preview session output', async 
   assert.equal(response.body.validation.valid, true);
   assert.equal(response.body.output.previewSession.sessionId, 'tenant-preview-preview-product-01-pilot-loan-adapter');
   assert.deepEqual(response.body.output.previewSession.excelSimulation.capabilities, ['export', 'refresh']);
+  assert.equal(typeof response.body.artifacts.deterministicHash, 'string');
+  assert.ok(Array.isArray(response.body.artifacts.files));
 });
 
 test('POST /preview/report returns no-go when built-product payload is invalid', async () => {

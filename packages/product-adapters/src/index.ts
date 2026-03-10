@@ -9,6 +9,7 @@ export { adaptersIndex, builtProductIntakeSchema, previewSessionSchema, compatib
 export { createPilotLoanAdapter, PILOT_ADAPTER_ID, PILOT_ADAPTER_VERSION } from './pilot-adapter.js';
 export { analyzePermissionMatrix } from './permissions.js';
 export { analyzeCanonicalMappingCoverage } from './mapping-coverage.js';
+export { generateDeterministicPreviewArtifacts } from './preview-artifacts.js';
 export { validateBuiltProductIntake, validateBuiltProductWithRegistry } from './validator.js';
 
 export type AdapterSeverity = 'blocking' | 'warning';
