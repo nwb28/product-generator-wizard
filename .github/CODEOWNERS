@@ -1,19 +1,19 @@
-# Global fallback owner
+# Default owner for all repository changes
 * @nwb28
 
-# Application surfaces
-/apps/generator-api/ @nwb28
-/apps/wizard-ui/ @nwb28
-
-# Shared generation libraries
+# Contracts and generation logic require architecture governance review
 /packages/contracts/ @nwb28
-/packages/validator/ @nwb28
 /packages/compiler/ @nwb28
+/packages/validator/ @nwb28
 /packages/scaffold-templates/ @nwb28
 /packages/review-doc/ @nwb28
 
-# Tooling and CI
-/tools/ @nwb28
+# Application surfaces require domain owner review
+/apps/generator-api/ @nwb28
+/apps/wizard-ui/ @nwb28
+/tools/generator-cli/ @nwb28
+
+# CI/workflow and governance controls
 /.github/workflows/ @nwb28
-/tests/ @nwb28
-/docs/ @nwb28
+/docs/governance/ @nwb28
+/config/tenant-quotas.json @nwb28
