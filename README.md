@@ -7,6 +7,7 @@ Monorepo for the Product Generator Wizard MVP.
 - `apps/generator-api`: HTTP API exposing validate/compile/generate/review-document
 - `tools/generator-cli`: CLI for local and CI workflows
 - `packages/contracts`: Versioned intake/manifest schemas and contracts index
+- `packages/product-adapters`: Built-product adapter interfaces and registry primitives
 - `packages/validator`: Intake validation + diagnostics
 - `packages/compiler`: Intake -> manifest compilation
 - `packages/scaffold-templates`: Deterministic scaffold generation for pilot profile
