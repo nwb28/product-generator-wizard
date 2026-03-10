@@ -90,3 +90,9 @@
   - continue policy check step on failure
   - open a governance issue when drift is detected (deduplicated by title)
   - fail the workflow after issue creation to preserve blocking behavior
+
+## Enterprise Ticket - Deploy Attestation Verification
+- Updated `.github/workflows/deploy.yml` preflight to:
+  - resolve latest successful `release-evidence-bundle` run id
+  - download `release-evidence-bundle` artifact from that run
+  - verify `release-evidence.json` attestation with `gh attestation verify`

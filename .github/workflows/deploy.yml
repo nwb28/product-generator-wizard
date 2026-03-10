@@ -18,6 +18,8 @@ on:
 
 permissions:
   contents: read
+  actions: read
+  attestations: read
 
 jobs:
   preflight:
@@ -40,6 +42,31 @@ jobs:
 
       - name: Release gate checks
         run: npm run release:check
+
+      - name: Resolve latest release evidence run id
+        id: release_evidence_run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN_ID=$(gh run list --workflow release-evidence-bundle.yml --branch "${{ inputs.deploy_ref }}" --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
+            echo "No successful release-evidence-bundle run found for ref ${{ inputs.deploy_ref }}."
+            exit 1
+          fi
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Download release evidence artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p .tmp/release-evidence
+          gh run download "${{ steps.release_evidence_run.outputs.run_id }}" -n release-evidence-bundle -D .tmp/release-evidence
+
+      - name: Verify release evidence attestation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh attestation verify .tmp/release-evidence/release-evidence.json --repo "${{ github.repository }}"
 
       - name: Environment config validation
         run: npm run config:check
