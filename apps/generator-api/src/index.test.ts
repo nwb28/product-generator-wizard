@@ -272,6 +272,18 @@ test('POST /preview/report returns no-go when built-product payload is invalid',
   assert.ok(response.body.summary.blocking > 0);
 });
 
+test('POST /preview/report returns permission matrix coverage for valid payload', async () => {
+  const response = await supertest(app)
+    .post('/preview/report')
+    .set('authorization', await authHeader())
+    .send(builtProductPayload);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.recommendation, 'Go');
+  assert.equal(response.body.permissionMatrix.bucs.roles, 1);
+  assert.equal(response.body.permissionMatrix.company.permissions, 3);
+});
+
 test('POST /generate returns 429 when tenant-principal key exceeds limit', async () => {
   const limitedApp = createApp({ rateLimiter: createRateLimiter({ maxRequests: 1, windowMs: 60_000 }) });
   const token = await authHeader();

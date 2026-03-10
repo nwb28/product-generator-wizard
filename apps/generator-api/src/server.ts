@@ -1,6 +1,7 @@
 import express from 'express';
 import { compileManifest } from '@pgw/packages-compiler/dist/index.js';
 import {
+  analyzePermissionMatrix,
   createPilotLoanAdapter,
   createProductAdapterRegistry,
   validateBuiltProductIntake,
@@ -582,21 +583,28 @@ export function createApp(options: AppOptions = {}) {
     }
 
     const validation = validateBuiltProductWithRegistry(req.body as any, productAdapterRegistry);
-    const readinessScore = Math.max(0, 100 - validation.summary.warning * 5 - validation.summary.blocking * 20);
-    const recommendation = validation.summary.blocking > 0 ? 'No-Go' : 'Go';
+    const permissionAnalysis = analyzePermissionMatrix((req.body as any).permissions ?? {});
+    const combinedBlocking = validation.summary.blocking + permissionAnalysis.summary.blocking;
+    const combinedWarning = validation.summary.warning + permissionAnalysis.summary.warning;
+    const readinessScore = Math.max(0, 100 - combinedWarning * 5 - combinedBlocking * 20);
+    const recommendation = combinedBlocking > 0 ? 'No-Go' : 'Go';
 
     emitAudit(auditLogger, {
       requestId,
       tenantId,
       endpoint: '/preview/report',
       action: 'preview-report',
-      outcome: validation.valid ? 'success' : 'failure',
+      outcome: combinedBlocking === 0 ? 'success' : 'failure',
       principalSub: principal.sub
     });
-    res.status(validation.valid ? 200 : 400).json({
+    res.status(combinedBlocking === 0 ? 200 : 400).json({
       adapter: (req.body as any).adapter ?? null,
-      summary: validation.summary,
-      diagnostics: validation.diagnostics,
+      summary: {
+        blocking: combinedBlocking,
+        warning: combinedWarning
+      },
+      diagnostics: [...validation.diagnostics, ...permissionAnalysis.diagnostics],
+      permissionMatrix: permissionAnalysis.coverage,
       readinessScore,
       recommendation
     });
