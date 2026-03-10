@@ -25,10 +25,10 @@ Required attributes:
 1. Availability alert: trigger when 5-minute error rate (`5xx`) > 2%.
 2. Latency alert: trigger when p95 over rolling 15 minutes breaches endpoint SLO.
 3. Abuse alert: trigger when `429` rate increases by 3x baseline for 15 minutes.
-4. Burn-rate response procedure is documented in `docs/slo-alert-runbook.md`.
+4. Burn-rate response procedure is documented in `docs/operations/slo-alert-runbook.md`.
 
 ## Operational Guidance
 1. Keep `WIZARD_TELEMETRY_STDOUT=false` in production unless a temporary debug session is active.
 2. Export counters/histograms/spans to central observability backends (Azure Monitor, Datadog, or equivalent).
 3. Keep endpoint-level dashboards per tenant segment and environment.
-4. Review SLO attainment weekly and record action items in `docs/operations-log.md`.
+4. Review SLO attainment weekly and record action items in `docs/operations/operations-log.md`.

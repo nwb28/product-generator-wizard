@@ -2,7 +2,7 @@
 
 ## Sources
 1. Synthetic monitor failures from `.github/workflows/synthetic-monitor.yml`
-2. Burn-rate alerts from `docs/slo-alert-runbook.md`
+2. Burn-rate alerts from `docs/operations/slo-alert-runbook.md`
 3. Security gate failures from `.github/workflows/security-scan.yml`
 
 ## Severity Mapping
@@ -42,4 +42,4 @@
 ## Required Incident Artifacts
 1. Synthetic report artifact (`.tmp/synthetic/latest.json`)
 2. Relevant release check output (`npm run release:check`)
-3. Remediation tracking entry in `docs/remediation-tracker.md`
+3. Remediation tracking entry in `docs/governance/remediation-tracker.md`

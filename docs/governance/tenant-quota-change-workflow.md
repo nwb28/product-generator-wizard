@@ -16,4 +16,4 @@ Changes to `config/tenant-quotas.json`.
 ## Audit Trail
 1. PR discussion and review approvals.
 2. Workflow artifact with reviewed tenant quota summary.
-3. Post-merge entry in `docs/operations-log.md` for material quota changes.
+3. Post-merge entry in `docs/operations/operations-log.md` for material quota changes.

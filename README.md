@@ -25,3 +25,4 @@ npm test
 - `npm run perf:baseline` runs local API load baseline and threshold checks.
 - API contract reference: `docs/api/openapi.yaml`.
 - OpenAPI validation: `npm run openapi:check`.
+- Full documentation index: `docs/README.md`.

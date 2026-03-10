@@ -46,7 +46,7 @@ Scheduled drill workflow:
 2. Restore latest known-good artifact snapshot.
 3. Run `npm run dr:check` and compare hashes.
 4. Run contract gate (`generator-contract-gate`) against restored artifacts.
-5. Document incident and remediation actions in `docs/operations-log.md`.
+5. Document incident and remediation actions in `docs/operations/operations-log.md`.
 
 ## Ownership
 - Primary: DevOps Engineer

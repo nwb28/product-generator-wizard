@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - config/tenant-quotas.json
-      - docs/tenant-quotas.md
+      - docs/governance/tenant-quotas.md
       - tools/tenant-quota-review.mjs
 
 permissions:

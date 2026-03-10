@@ -20,7 +20,7 @@ Assuming 99.9% availability SLO:
 2. Check `429`, `409`, and `5xx` trends in telemetry dashboards.
 3. If fast-burn threshold is hit:
    - halt active rollout
-   - execute rollback procedure from `docs/rollout-strategy.md`
+   - execute rollback procedure from `docs/operations/rollout-strategy.md`
 
 ## Investigation Checklist
 1. Validate auth and config state (`npm run config:check`).
@@ -32,5 +32,5 @@ Assuming 99.9% availability SLO:
 ## Exit Criteria
 1. Synthetic probe returns to green for at least 2 consecutive runs.
 2. Fast-burn and slow-burn thresholds are below trigger levels.
-3. Incident record created in `docs/operations-log.md` with root cause and remediation.
-4. Alert routing and escalation follow `docs/alert-routing.md`.
+3. Incident record created in `docs/operations/operations-log.md` with root cause and remediation.
+4. Alert routing and escalation follow `docs/operations/alert-routing.md`.

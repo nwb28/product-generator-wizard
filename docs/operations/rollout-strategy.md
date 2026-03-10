@@ -33,7 +33,7 @@ Advance only when each phase is stable for one full business day and no Sev1/Sev
    - `node tools/generator-cli/dist/index.js ci-check fixtures/golden/pilot-intake.json`
    - `npm run dr:check`
 3. Confirm no new data contract drift.
-4. Document incident in `docs/operations-log.md` and open remediation tasks.
+4. Document incident in `docs/operations/operations-log.md` and open remediation tasks.
 
 ## Ownership
 - Release manager: DevOps Engineer

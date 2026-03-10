@@ -34,7 +34,7 @@ Define minimum controls for operating Product Generator Wizard in regulated ente
 3. Required actions:
    - freeze rollout
    - preserve logs and artifacts
-   - run rollback procedure from `docs/rollout-strategy.md`
+   - run rollback procedure from `docs/operations/rollout-strategy.md`
    - capture post-incident RCA within 5 business days
 
 ## Evidence Checklist
