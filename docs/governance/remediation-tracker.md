@@ -12,7 +12,7 @@
 | REM-008 | Pre-inclusion docs pack | Medium | Closed | Tech Lead | Published preview runbook, pre-inclusion policy, adapter authoring, and operator guides. |
 | REM-009 | Tracked `.test-dist` artifacts | Medium | Open | Frontend | Remove compiled test artifacts from source control and enforce clean generation at test runtime. |
 | REM-010 | Branch protection for preview gate | High | Closed | DevOps | `main` now requires `preview-contract-gate` with strict checks and review enforcement. |
-| REM-011 | Preview threat model publication | Medium | Open | Security | Document attack surfaces, trust boundaries, and retention controls for preview flows. |
+| REM-011 | Preview threat model publication | Medium | Closed | Security | Published preview threat model with tenant/isolation/retention controls and residual risk tracking. |
 | REM-012 | Release evidence bundling | Medium | Open | DevOps | Attach preview gate/report/SBOM outputs as release evidence package. |
 
 ## Burn-Down Result

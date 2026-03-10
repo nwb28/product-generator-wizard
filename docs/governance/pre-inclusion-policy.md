@@ -3,6 +3,9 @@
 ## Purpose
 Define mandatory controls for onboarding fully built products into the catalog using preview validation and compatibility gates.
 
+## Security Reference
+- Threat model baseline: `docs/governance/preview-threat-model.md`
+
 ## Policy Statements
 1. Every candidate product must pass preview contract validation before inclusion.
 2. Any blocking diagnostic is an automatic `No-Go`.
