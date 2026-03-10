@@ -148,3 +148,8 @@
 - Added label policy config `config/issue-labels.json`.
 - Added bootstrap tool `tools/bootstrap-issue-labels.mjs`.
 - Tool supports dry-run planning and apply mode for governance/operations alert labels.
+
+## Enterprise Ticket - Governance Remediation Environment Protection
+- Added environment protection config `config/environment-protection.json`.
+- Added apply utility `tools/apply-environment-protection.mjs` with dry-run/apply modes.
+- Enforced `governance-remediation` required reviewer and self-review prevention on the repository environment.

@@ -31,6 +31,7 @@
 | REM-027 | Control evidence export packaging gap | Medium | Closed | DevOps | Added control-evidence export utility and scheduled artifact workflow for audit-ready bundles. |
 | REM-028 | Quarterly governance self-test automation gap | Medium | Closed | Tech Lead | Added quarterly self-test workflow and consolidated governance report artifact with alerting. |
 | REM-029 | Missing operational labels for governance workflows | Low | Closed | DevOps | Bootstrapped required repository labels (`governance`, `operations`, `retention`, `branch-protection`, `security`, `compliance`). |
+| REM-030 | Governance remediation environment approval gap | Medium | Closed | DevOps | Added environment protection policy automation and enforced required reviewer with self-review prevention for `governance-remediation`. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.
