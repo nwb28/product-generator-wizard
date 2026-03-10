@@ -214,3 +214,12 @@
   - `npm run release:check`
   - `.github/workflows/ci.yml`
   - `.github/workflows/governance-quarterly-self-test.yml`
+
+## Enterprise Ticket - RBAC Policy Gate
+- Added RBAC policy baseline `config/rbac-policy.json`.
+- Added validator `tools/validate-rbac-policy.mjs` and tests `tools/validate-rbac-policy.test.mjs`.
+- Added `npm run rbac:check` for golden and preview fixture permission matrix validation.
+- Enforced checks in:
+  - `npm run release:check`
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/generator-contract-gate.yml`
