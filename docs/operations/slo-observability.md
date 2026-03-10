@@ -32,6 +32,7 @@ Required attributes:
 2. Export counters/histograms/spans to central observability backends (Azure Monitor, Datadog, or equivalent).
 3. Keep endpoint-level dashboards per tenant segment and environment.
 4. Review SLO attainment weekly and record action items in `docs/operations/operations-log.md`.
+5. Keep policy values synchronized with `config/slo-policy.json`; CI/release checks enforce policy validity.
 
 ## Retention Purge Freshness SLO
 1. `preview-artifact-retention` must record a successful run within 26 hours.

@@ -54,6 +54,9 @@ jobs:
       - name: Verify workflow retention policy conformance
         run: node tools/validate-workflow-retention.mjs --policy config/artifact-retention-policy.json --workflows .github/workflows
 
+      - name: Verify SLO policy
+        run: npm run slo:check
+
       - name: Verify repository layout policy conformance
         run: npm run layout:check
 

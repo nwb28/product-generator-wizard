@@ -35,6 +35,7 @@
 | REM-031 | Workflow command reference integrity gap | Medium | Closed | DevOps | Added workflow command reference validation and enforced checks for `tools/*.mjs` and root npm scripts in CI/release gates. |
 | REM-032 | Post-merge governance bootstrap consistency gap | Medium | Closed | DevOps | Added unified governance bootstrap orchestration command, baseline config, and runbook for dry-run/apply control initialization. |
 | REM-033 | Repository layout drift detection gap | Medium | Closed | Tech Lead | Added repository layout policy with CI/release enforcement to protect folder hygiene and prevent tracked transient artifacts at repo root. |
+| REM-034 | SLO/error-budget policy drift gap | Medium | Closed | SRE | Added SLO policy-as-code validation and enforced checks across CI/release gates. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.

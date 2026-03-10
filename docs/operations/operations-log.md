@@ -174,3 +174,11 @@
   - `npm run release:check`
   - `.github/workflows/ci.yml`
   - `.github/workflows/generator-contract-gate.yml`
+
+## Enterprise Ticket - SLO Policy-as-Code Gate
+- Added SLO policy baseline `config/slo-policy.json`.
+- Added validator `tools/validate-slo-policy.mjs` and tests `tools/validate-slo-policy.test.mjs`.
+- Enforced SLO checks in:
+  - `npm run release:check`
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/generator-contract-gate.yml`
