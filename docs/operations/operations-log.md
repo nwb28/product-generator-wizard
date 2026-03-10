@@ -28,3 +28,15 @@
 ## Enterprise Ticket 1 - PR Opened
 - Opened PR #2 from `codex/enterprise-hardening-20260309` into `main`.
 - URL: https://github.com/nwb28/product-generator-wizard/pull/2
+
+## Phase 7 Ticket 27 - Preview Gate Branch Protection
+- Updated `main` branch protection required checks to include `preview-contract-gate`.
+- Preserved existing protection controls:
+  - strict status checks
+  - required conversation resolution
+  - 1 approving review
+  - enforce admin rules
+- Verified through GitHub API response that required contexts are now:
+  - `bootstrap`
+  - `contract-gate`
+  - `preview-contract-gate`
