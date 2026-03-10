@@ -31,6 +31,9 @@ jobs:
       - name: Build workspace
         run: npm run build
 
+      - name: Run API readiness and contract smoke
+        run: npm run smoke:api
+
       - name: Validate intake (blocking gate)
         run: node tools/generator-cli/dist/index.js validate fixtures/golden/pilot-intake.json
 

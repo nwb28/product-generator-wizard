@@ -8,6 +8,12 @@ import { createApp } from '../apps/generator-api/dist/server.js';
 const app = createApp();
 
 async function run() {
+  const health = await supertest(app).get('/healthz');
+  assertStatus(health.status, 200, '/healthz');
+
+  const ready = await supertest(app).get('/readyz');
+  assertStatus(ready.status, 200, '/readyz');
+
   const token = await signTestToken('smoke-user', ['wizard-admin']);
   const authz = await supertest(app).get('/authz/wizard-entry').set('authorization', `Bearer ${token}`);
   assertStatus(authz.status, 200, 'authz/wizard-entry');
