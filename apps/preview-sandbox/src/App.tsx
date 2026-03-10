@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { simulatePreview } from './api.js';
 import { normalizePreviewViews } from './preview.js';
+import { buildSignoffRecord, isReviewerChecklistComplete } from './reviewer.js';
 import { createPreviewSession, transitionPreviewSession } from './session.js';
 import type { PreviewSession, PreviewSessionStatus, TenantContext } from './types.js';
 
@@ -20,6 +21,13 @@ export function App() {
   const [workforceSimulation, setWorkforceSimulation] = useState<{ enabled: boolean; capabilities: string[] } | null>(
     null
   );
+  const [reviewer, setReviewer] = useState('');
+  const [checklist, setChecklist] = useState({
+    permissionsVerified: false,
+    mappingsVerified: false,
+    securityEvidenceVerified: false,
+    testsVerified: false
+  });
   const [error, setError] = useState('');
 
   const authState = useMemo(() => {
@@ -170,6 +178,60 @@ export function App() {
           </ul>
         </section>
       ) : null}
+
+      <section>
+        <h2>Reviewer Sign-Off</h2>
+        <label>
+          Reviewer
+          <input value={reviewer} onChange={(event) => setReviewer(event.target.value)} />
+        </label>
+        <label>
+          <input
+            type='checkbox'
+            checked={checklist.permissionsVerified}
+            onChange={(event) => setChecklist({ ...checklist, permissionsVerified: event.target.checked })}
+          />
+          Permissions verified
+        </label>
+        <label>
+          <input
+            type='checkbox'
+            checked={checklist.mappingsVerified}
+            onChange={(event) => setChecklist({ ...checklist, mappingsVerified: event.target.checked })}
+          />
+          Mappings verified
+        </label>
+        <label>
+          <input
+            type='checkbox'
+            checked={checklist.securityEvidenceVerified}
+            onChange={(event) => setChecklist({ ...checklist, securityEvidenceVerified: event.target.checked })}
+          />
+          Security evidence verified
+        </label>
+        <label>
+          <input
+            type='checkbox'
+            checked={checklist.testsVerified}
+            onChange={(event) => setChecklist({ ...checklist, testsVerified: event.target.checked })}
+          />
+          Tests verified
+        </label>
+        <p>Checklist complete: {isReviewerChecklistComplete(checklist) ? 'Yes' : 'No'}</p>
+        {session ? (
+          <pre>
+            {JSON.stringify(
+              buildSignoffRecord({
+                reviewer,
+                checklist,
+                recommendation: session.status === 'reported' ? 'Go' : 'No-Go'
+              }),
+              null,
+              2
+            )}
+          </pre>
+        ) : null}
+      </section>
 
       {error ? <p role='alert'>{error}</p> : null}
     </main>
