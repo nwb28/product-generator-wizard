@@ -22,6 +22,10 @@ Behavior:
 ### Distributed Store (Recommended for multi-instance deployments)
 - `WIZARD_REDIS_URL` (Redis connection URL, enables distributed rate limit and idempotency stores)
 
+### Audit Logging Hardening
+- `WIZARD_AUDIT_HMAC_SECRET` (optional but recommended in staging/production; signs audit chain records)
+- `WIZARD_AUDIT_LOG_PATH` (optional append-only NDJSON file sink for local/file-based forwarding)
+
 ## Local Development
 Example:
 ```bash
@@ -40,6 +44,7 @@ npm test
 - Rotate secret on a scheduled cadence.
 - Keep issuer and audience values immutable per environment.
 - Run `npm run config:check` in deployment pipelines before releasing.
+- Set `WIZARD_AUDIT_HMAC_SECRET` for tamper-evident signed audit records.
 
 ## Secret Sources
 Recommended secret flow:

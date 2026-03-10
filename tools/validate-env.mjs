@@ -32,6 +32,11 @@ if (hasStrictAuth) {
   if (secret === 'local-dev-auth-secret-change-me') {
     errors.push('WIZARD_AUTH_JWT_SECRET must not use the development default for staging/production.');
   }
+
+  const auditSecret = process.env.WIZARD_AUDIT_HMAC_SECRET ?? '';
+  if (auditSecret.length < 32) {
+    errors.push('WIZARD_AUDIT_HMAC_SECRET must be set to at least 32 characters for staging/production.');
+  }
 }
 
 for (const numeric of ['WIZARD_RATE_LIMIT_MAX_PER_MINUTE', 'WIZARD_IDEMPOTENCY_TTL_MS']) {
