@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import type { BuiltProductAdapterInput, ProductAdapter } from './index.js';
 import {
   adaptersIndex,
+  assertAdapterSchemaCompatibility,
   builtProductIntakeSchema,
   compatibilityReportSchema,
   createProductAdapterRegistry,
+  getActiveAdapterSchemaVersions,
   previewSessionSchema
 } from './index.js';
 
@@ -125,4 +127,43 @@ test('adapters index declares active schema versions', () => {
   assert.equal(adaptersIndex.activeBuiltProductIntakeSchemaVersion, '1.0.0');
   assert.equal(adaptersIndex.activePreviewSessionSchemaVersion, '1.0.0');
   assert.equal(adaptersIndex.activeCompatibilityReportSchemaVersion, '1.0.0');
+});
+
+test('active schema resolver returns expected version set', () => {
+  const versions = getActiveAdapterSchemaVersions();
+  assert.deepEqual(versions, {
+    builtProductIntake: '1.0.0',
+    previewSession: '1.0.0',
+    compatibilityReport: '1.0.0'
+  });
+});
+
+test('compatibility assertion passes for active adapter version', () => {
+  assert.doesNotThrow(() =>
+    assertAdapterSchemaCompatibility(
+      '1.0.0',
+      {
+        builtProductIntake: '1.0.0',
+        previewSession: '1.0.0',
+        compatibilityReport: '1.0.0'
+      },
+      adaptersIndex
+    )
+  );
+});
+
+test('compatibility assertion fails for unsupported adapter version', () => {
+  assert.throws(
+    () =>
+      assertAdapterSchemaCompatibility(
+        '2.0.0',
+        {
+          builtProductIntake: '1.0.0',
+          previewSession: '1.0.0',
+          compatibilityReport: '1.0.0'
+        },
+        adaptersIndex
+      ),
+    /not registered/
+  );
 });

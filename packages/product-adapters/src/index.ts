@@ -9,6 +9,20 @@ export { adaptersIndex, builtProductIntakeSchema, previewSessionSchema, compatib
 
 export type AdapterSeverity = 'blocking' | 'warning';
 
+export type AdapterCompatibilityIndex = {
+  activeBuiltProductIntakeSchemaVersion: string;
+  activePreviewSessionSchemaVersion: string;
+  activeCompatibilityReportSchemaVersion: string;
+  compatibility: Record<
+    string,
+    {
+      builtProductIntake: string[];
+      previewSession: string[];
+      compatibilityReport: string[];
+    }
+  >;
+};
+
 export type AdapterDiagnostic = {
   code: string;
   severity: AdapterSeverity;
@@ -46,6 +60,12 @@ export type ProductAdapterRegistry = {
   list(): ProductAdapter[];
 };
 
+export type ActiveAdapterSchemaVersions = {
+  builtProductIntake: string;
+  previewSession: string;
+  compatibilityReport: string;
+};
+
 export function createProductAdapterRegistry(seed: ProductAdapter[] = []): ProductAdapterRegistry {
   const adapters = new Map<string, ProductAdapter>();
 
@@ -80,4 +100,37 @@ function registerAdapter(store: Map<string, ProductAdapter>, adapter: ProductAda
     throw new Error(`Product adapter already registered for ${key}.`);
   }
   store.set(key, adapter);
+}
+
+export function getActiveAdapterSchemaVersions(index: AdapterCompatibilityIndex = adaptersIndex): ActiveAdapterSchemaVersions {
+  return {
+    builtProductIntake: index.activeBuiltProductIntakeSchemaVersion,
+    previewSession: index.activePreviewSessionSchemaVersion,
+    compatibilityReport: index.activeCompatibilityReportSchemaVersion
+  };
+}
+
+export function assertAdapterSchemaCompatibility(
+  requestedVersion: string,
+  schemas: ActiveAdapterSchemaVersions,
+  index: AdapterCompatibilityIndex = adaptersIndex
+): void {
+  const supported = index.compatibility[requestedVersion];
+  if (!supported) {
+    throw new Error(`Adapter version ${requestedVersion} is not registered in compatibility index.`);
+  }
+
+  if (!supported.builtProductIntake.includes(schemas.builtProductIntake)) {
+    throw new Error(
+      `Adapter version ${requestedVersion} does not support built-product-intake schema ${schemas.builtProductIntake}.`
+    );
+  }
+  if (!supported.previewSession.includes(schemas.previewSession)) {
+    throw new Error(`Adapter version ${requestedVersion} does not support preview-session schema ${schemas.previewSession}.`);
+  }
+  if (!supported.compatibilityReport.includes(schemas.compatibilityReport)) {
+    throw new Error(
+      `Adapter version ${requestedVersion} does not support compatibility-report schema ${schemas.compatibilityReport}.`
+    );
+  }
 }
