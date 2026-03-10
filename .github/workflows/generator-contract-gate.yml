@@ -48,6 +48,9 @@ jobs:
       - name: Run scaffold contract tests
         run: npm test --workspace @pgw/packages-scaffold-templates
 
+      - name: Verify clean tracked tree
+        run: node tools/ensure-clean-worktree.mjs
+
       - name: Produce diagnostics artifact
         run: |
           node tools/generator-cli/dist/index.js validate fixtures/golden/pilot-intake.json > .tmp/diagnostics.txt

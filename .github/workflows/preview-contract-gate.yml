@@ -36,6 +36,9 @@ jobs:
       - name: Run preview contract gate
         run: node tools/preview-contract-gate.mjs fixtures/preview/pilot-built-product-intake.json
 
+      - name: Verify clean tracked tree
+        run: node tools/ensure-clean-worktree.mjs
+
       - name: Upload preview contract artifacts
         uses: actions/upload-artifact@v4
         with:
