@@ -1,0 +1,33 @@
+# Generated from .github/CODEOWNERS.template via tools/render-codeowners.mjs
+# Default owner for all repository changes
+* {{default_owner}}
+
+# Contracts and generation logic require architecture governance review
+/packages/contracts/ {{architecture}}
+/packages/compiler/ {{architecture}}
+/packages/validator/ {{architecture}}
+/packages/scaffold-templates/ {{architecture}}
+/packages/review-doc/ {{architecture}}
+
+# Application surfaces require domain owner review
+/apps/generator-api/ {{backend}}
+/apps/wizard-ui/ {{frontend}}
+/apps/preview-sandbox/ {{preview}}
+/tools/generator-cli/ {{backend}}
+/tests/e2e/ {{qa}}
+/tests/preview-e2e/ {{qa}}
+
+# Adapter and integration simulation controls
+/packages/product-adapters/ {{adapters}}
+/fixtures/preview/ {{adapters}}
+
+# CI/workflow and governance controls
+/.github/workflows/ {{devops}}
+/docs/governance/ {{governance}}
+/docs/operations/ {{devops}}
+/docs/reference/adr/ {{governance}}
+/tools/check-branch-protection.mjs {{devops}}
+/tools/bundle-release-evidence.mjs {{security}}
+/tools/purge-preview-artifacts.mjs {{devops}}
+/tools/ensure-clean-worktree.mjs {{devops}}
+/config/tenant-quotas.json {{governance}}

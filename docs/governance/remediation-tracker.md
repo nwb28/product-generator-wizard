@@ -24,6 +24,7 @@
 | REM-020 | Workflow artifact retention policy drift | Medium | Closed | DevOps | Added retention policy config and CI validator enforcing workflow artifact retention-days values. |
 | REM-021 | SOC2 control traceability documentation gap | Medium | Closed | Tech Lead | Published SOC2-style control matrix mapping controls to technical enforcement and evidence. |
 | REM-022 | DR drill coverage gap for preview evidence | High | Closed | DevOps | DR check/report and drill workflow now validate preview evidence backup/restore artifacts and hashes. |
+| REM-023 | CODEOWNERS role model and mandatory owner review gap | Medium | Closed | Tech Lead | Added role-alias-based CODEOWNERS generation and enabled required code-owner review on `main`. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.

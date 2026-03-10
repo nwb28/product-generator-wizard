@@ -1,0 +1,14 @@
+{
+  "roles": {
+    "default_owner": "@nwb28",
+    "architecture": "@nwb28",
+    "backend": "@nwb28",
+    "frontend": "@nwb28",
+    "preview": "@nwb28",
+    "qa": "@nwb28",
+    "adapters": "@nwb28",
+    "devops": "@nwb28",
+    "governance": "@nwb28",
+    "security": "@nwb28"
+  }
+}

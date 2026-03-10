@@ -110,3 +110,10 @@
 - Extended `tools/dr-check.mjs` to include preview evidence backup/restore verification.
 - Extended `tools/dr-drill-report.mjs` to include preview evidence pass/fail status in drill report.
 - Updated `.github/workflows/dr-drill.yml` artifact upload paths for preview DR outputs.
+
+## Enterprise Ticket - CODEOWNERS Role Alias Model
+- Added role alias configuration: `config/codeowners-roles.json`.
+- Added CODEOWNERS template and renderer:
+  - `.github/CODEOWNERS.template`
+  - `tools/render-codeowners.mjs`
+- Updated `main` branch protection to require code owner reviews (`require_code_owner_reviews=true`).
