@@ -54,6 +54,9 @@ jobs:
       - name: Verify workflow retention policy conformance
         run: node tools/validate-workflow-retention.mjs --policy config/artifact-retention-policy.json --workflows .github/workflows
 
+      - name: Verify workflow command references
+        run: npm run workflow:check
+
       - name: Produce diagnostics artifact
         run: |
           node tools/generator-cli/dist/index.js validate fixtures/golden/pilot-intake.json > .tmp/diagnostics.txt

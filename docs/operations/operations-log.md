@@ -153,3 +153,11 @@
 - Added environment protection config `config/environment-protection.json`.
 - Added apply utility `tools/apply-environment-protection.mjs` with dry-run/apply modes.
 - Enforced `governance-remediation` required reviewer and self-review prevention on the repository environment.
+
+## Enterprise Ticket - Workflow Command Reference Integrity
+- Added workflow command reference validator `tools/verify-workflow-command-references.mjs`.
+- Added automated tests `tools/verify-workflow-command-references.test.mjs`.
+- Enforced workflow reference checks in:
+  - `npm run release:check`
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/generator-contract-gate.yml`

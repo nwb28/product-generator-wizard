@@ -28,7 +28,8 @@
     "quota:review": "npm run build --workspace @pgw/apps-generator-api && node tools/tenant-quota-review.mjs config/tenant-quotas.json",
     "sbom:generate": "mkdir -p .tmp && npm sbom --sbom-format cyclonedx --sbom-type application > .tmp/sbom.cdx.json",
     "smoke:api": "node tools/api-smoke.mjs",
-    "smoke:ui": "node tools/ui-smoke.mjs"
+    "smoke:ui": "node tools/ui-smoke.mjs",
+    "workflow:check": "node tools/verify-workflow-command-references.mjs --workflows .github/workflows --package package.json"
   },
   "engines": {
     "node": ">=20"
