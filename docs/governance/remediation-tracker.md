@@ -19,6 +19,7 @@
 | REM-015 | Preview artifact retention purge automation | Medium | Closed | DevOps | Added scheduled purge workflow and retention cleanup utility for preview artifact roots. |
 | REM-016 | Build artifact strategy ambiguity | Low | Closed | Tech Lead | Published ADR-0001 defining source-only strategy with CI-generated artifacts. |
 | REM-017 | CODEOWNERS path-level ownership gaps | Medium | Closed | Tech Lead | Expanded CODEOWNERS for preview, adapters, evidence tooling, and operations docs surfaces. |
+| REM-018 | Branch protection drift alerting gap | Medium | Closed | DevOps | Branch protection governance workflow now opens an issue on drift and fails the run. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.

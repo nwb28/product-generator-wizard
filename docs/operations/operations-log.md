@@ -84,3 +84,9 @@
   - product adapter and preview fixture paths
   - operations docs and ADR references
   - governance-critical tools for branch protection, evidence, retention, and cleanliness
+
+## Enterprise Ticket - Branch Protection Drift Alerting
+- Updated `.github/workflows/branch-protection-governance.yml` to:
+  - continue policy check step on failure
+  - open a governance issue when drift is detected (deduplicated by title)
+  - fail the workflow after issue creation to preserve blocking behavior
