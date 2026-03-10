@@ -19,6 +19,7 @@
     "audit:forward:dry-run": "node tools/audit-forwarder.mjs --dry-run",
     "config:check": "node tools/validate-env.mjs --target=production",
     "perf:baseline": "npm run build --workspace @pgw/packages-contracts && npm run build --workspace @pgw/apps-generator-api && node tools/perf-baseline.mjs",
+    "perf:preview": "npm run build --workspace @pgw/packages-contracts && npm run build --workspace @pgw/packages-product-adapters && npm run build --workspace @pgw/apps-generator-api && node tools/perf-preview.mjs",
     "perf:longrun": "npm run build --workspace @pgw/packages-contracts && npm run build --workspace @pgw/apps-generator-api && node tools/perf-longrun.mjs",
     "dr:check": "npm run build --workspace @pgw/packages-contracts && npm run build --workspace @pgw/packages-validator && npm run build --workspace @pgw/packages-compiler && npm run build --workspace @pgw/packages-scaffold-templates && npm run build --workspace @pgw/packages-review-doc && npm run build --workspace @pgw/tools-generator-cli && node tools/dr-check.mjs",
     "dr:report": "node tools/dr-drill-report.mjs",
