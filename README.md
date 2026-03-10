@@ -5,6 +5,7 @@ Monorepo for the Product Generator Wizard MVP.
 ## Structure
 - `apps/wizard-ui`: React UI for intake, validation, generation, and downloads
 - `apps/generator-api`: HTTP API exposing validate/compile/generate/review-document
+- `apps/preview-sandbox`: React app for built-product preview session simulation
 - `tools/generator-cli`: CLI for local and CI workflows
 - `packages/contracts`: Versioned intake/manifest schemas and contracts index
 - `packages/product-adapters`: Built-product adapter interfaces and registry primitives
