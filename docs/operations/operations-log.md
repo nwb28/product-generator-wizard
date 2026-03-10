@@ -138,3 +138,8 @@
 - Added `tools/export-control-evidence.mjs` and tests.
 - Added scheduled workflow `.github/workflows/control-evidence-export.yml`.
 - Workflow publishes auditable control package artifact (`control-evidence-*`) with manifest and summary.
+
+## Enterprise Ticket - Quarterly Governance Self-Test
+- Added `tools/governance-self-test.mjs` and tests.
+- Added quarterly workflow `.github/workflows/governance-quarterly-self-test.yml`.
+- Workflow emits consolidated governance report artifact and opens issue on failure.
