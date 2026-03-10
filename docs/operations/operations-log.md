@@ -166,3 +166,11 @@
 - Added orchestration tool `tools/bootstrap-governance-controls.mjs` to execute label/environment/branch-protection bootstrap sequence.
 - Added baseline orchestration config `config/governance-bootstrap.json`.
 - Added runbook `docs/operations/governance-bootstrap-runbook.md` and indexed it in `docs/README.md`.
+
+## Enterprise Ticket - Repository Layout Policy Guard
+- Added repository layout policy config `config/repository-layout-policy.json`.
+- Added verifier `tools/verify-repository-layout.mjs` and tests `tools/verify-repository-layout.test.mjs`.
+- Enforced layout checks in:
+  - `npm run release:check`
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/generator-contract-gate.yml`

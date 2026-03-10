@@ -1,0 +1,24 @@
+{
+  "requiredPaths": [
+    "apps/wizard-ui",
+    "apps/generator-api",
+    "apps/preview-sandbox",
+    "tools/generator-cli",
+    "packages/contracts",
+    "packages/validator",
+    "packages/compiler",
+    "packages/scaffold-templates",
+    "packages/review-doc",
+    "packages/product-adapters",
+    "packages/api-client",
+    "fixtures/golden",
+    "fixtures/preview",
+    "docs",
+    ".github/workflows"
+  ],
+  "forbiddenTopLevelEntries": [
+    ".tmp",
+    ".test-dist",
+    "tmp"
+  ]
+}

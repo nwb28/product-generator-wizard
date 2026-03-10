@@ -30,7 +30,8 @@
     "smoke:api": "node tools/api-smoke.mjs",
     "smoke:ui": "node tools/ui-smoke.mjs",
     "workflow:check": "node tools/verify-workflow-command-references.mjs --workflows .github/workflows --package package.json",
-    "governance:bootstrap": "node tools/bootstrap-governance-controls.mjs --config config/governance-bootstrap.json"
+    "governance:bootstrap": "node tools/bootstrap-governance-controls.mjs --config config/governance-bootstrap.json",
+    "layout:check": "node tools/verify-repository-layout.mjs --policy config/repository-layout-policy.json"
   },
   "engines": {
     "node": ">=20"
