@@ -101,3 +101,7 @@
 - Added `config/artifact-retention-policy.json` as the policy source.
 - Added `tools/validate-workflow-retention.mjs` for workflow policy validation.
 - Wired retention policy validation into CI and generator contract gate workflows.
+
+## Enterprise Ticket - SOC2 Control Matrix
+- Added governance reference: `docs/governance/soc2-control-matrix.md`.
+- Mapped control objectives to enforcing workflows, scripts, and evidence artifacts.

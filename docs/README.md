@@ -41,6 +41,7 @@ Documentation is organized by domain so operational and governance assets stay d
 - `docs/governance/adapter-versioning-policy.md`
 - `docs/governance/pre-inclusion-policy.md`
 - `docs/governance/preview-threat-model.md`
+- `docs/governance/soc2-control-matrix.md`
 
 ## Reports
 - `docs/reports/pilot-execution-report.md`

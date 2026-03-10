@@ -3,6 +3,9 @@
 ## Purpose
 Define minimum controls for operating Product Generator Wizard in regulated enterprise environments.
 
+Related reference:
+- `docs/governance/soc2-control-matrix.md`
+
 ## Data Classification
 1. Intake payloads: confidential business metadata.
 2. Generated artifacts: internal confidential implementation outputs.

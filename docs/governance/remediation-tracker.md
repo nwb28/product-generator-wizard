@@ -22,6 +22,7 @@
 | REM-018 | Branch protection drift alerting gap | Medium | Closed | DevOps | Branch protection governance workflow now opens an issue on drift and fails the run. |
 | REM-019 | Deploy-time provenance verification gap | High | Closed | DevOps | Deploy workflow now downloads latest release evidence artifact and verifies attestation before deploy continuation. |
 | REM-020 | Workflow artifact retention policy drift | Medium | Closed | DevOps | Added retention policy config and CI validator enforcing workflow artifact retention-days values. |
+| REM-021 | SOC2 control traceability documentation gap | Medium | Closed | Tech Lead | Published SOC2-style control matrix mapping controls to technical enforcement and evidence. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.
