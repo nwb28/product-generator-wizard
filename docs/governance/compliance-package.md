@@ -13,6 +13,9 @@ Define minimum controls for operating Product Generator Wizard in regulated ente
 2. CI diagnostics artifacts: retain 30 days.
 3. Security scan artifacts: retain 14 days.
 4. Audit logs: retain minimum 400 days for forensics and compliance reviews.
+5. Workflow artifact retention settings are enforced by policy file:
+   - `config/artifact-retention-policy.json`
+   - validator: `node tools/validate-workflow-retention.mjs --policy config/artifact-retention-policy.json --workflows .github/workflows`
 
 ## Access Controls
 1. Require role-based access at wizard entry and generation actions.

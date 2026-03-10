@@ -1,0 +1,47 @@
+{
+  "defaults": {
+    "retentionDays": 30
+  },
+  "rules": [
+    {
+      "workflow": "generator-contract-gate.yml",
+      "artifact": "review-document-*",
+      "retentionDays": 30
+    },
+    {
+      "workflow": "generator-contract-gate.yml",
+      "artifact": "diagnostics-*",
+      "retentionDays": 14
+    },
+    {
+      "workflow": "preview-contract-gate.yml",
+      "artifact": "preview-contract-gate-artifacts",
+      "retentionDays": 30
+    },
+    {
+      "workflow": "security-scan.yml",
+      "artifact": "npm-audit-report-*",
+      "retentionDays": 14
+    },
+    {
+      "workflow": "sbom.yml",
+      "artifact": "sbom-cyclonedx",
+      "retentionDays": 30
+    },
+    {
+      "workflow": "release-evidence-bundle.yml",
+      "artifact": "release-evidence-bundle",
+      "retentionDays": 30
+    },
+    {
+      "workflow": "nonfunctional-reliability.yml",
+      "artifact": "nonfunctional-artifacts-*",
+      "retentionDays": 14
+    },
+    {
+      "workflow": "synthetic-monitor.yml",
+      "artifact": "synthetic-probe-*",
+      "retentionDays": 14
+    }
+  ]
+}

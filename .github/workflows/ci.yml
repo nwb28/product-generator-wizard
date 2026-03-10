@@ -19,4 +19,5 @@ jobs:
       - run: npm run smoke:api
       - run: npm run smoke:ui
       - run: npm test --if-present
+      - run: node tools/validate-workflow-retention.mjs --policy config/artifact-retention-policy.json --workflows .github/workflows
       - run: node tools/ensure-clean-worktree.mjs

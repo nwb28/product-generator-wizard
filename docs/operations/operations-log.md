@@ -96,3 +96,8 @@
   - resolve latest successful `release-evidence-bundle` run id
   - download `release-evidence-bundle` artifact from that run
   - verify `release-evidence.json` attestation with `gh attestation verify`
+
+## Enterprise Ticket - Retention Policy Conformance Gate
+- Added `config/artifact-retention-policy.json` as the policy source.
+- Added `tools/validate-workflow-retention.mjs` for workflow policy validation.
+- Wired retention policy validation into CI and generator contract gate workflows.
