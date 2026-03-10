@@ -67,3 +67,8 @@
   - `id-token: write`
   - `attestations: write`
 - Added `actions/attest-build-provenance@v2` step for `.tmp/release-evidence/**`.
+
+## Enterprise Ticket - Preview Artifact Retention Purge
+- Added `tools/purge-preview-artifacts.mjs` with retention-based file cleanup logic.
+- Added scheduled workflow `.github/workflows/preview-artifact-retention.yml`.
+- Updated preview runbook with purge procedure and workflow linkage.

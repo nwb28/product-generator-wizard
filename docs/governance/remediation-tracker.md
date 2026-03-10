@@ -16,6 +16,7 @@
 | REM-012 | Release evidence bundling | Medium | Closed | DevOps | Added release evidence workflow and bundle artifact linking preview gate, SBOM, and security scan outputs. |
 | REM-013 | Branch protection policy drift | High | Closed | DevOps | Added policy-as-code branch protection validation and required additional checks on `main`. |
 | REM-014 | Release evidence provenance attestation gap | Medium | Closed | DevOps | Added GitHub artifact provenance attestation for release evidence bundle outputs. |
+| REM-015 | Preview artifact retention purge automation | Medium | Closed | DevOps | Added scheduled purge workflow and retention cleanup utility for preview artifact roots. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.

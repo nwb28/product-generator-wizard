@@ -48,6 +48,9 @@ This runbook defines standard operating procedures for Phase 7 preview validatio
 2. For authz failures, verify tenant binding and role claims.
 3. For performance failures, capture baseline diff and rollback the regressing change when required.
 4. For repeated CI gate failures, halt rollout and open remediation item in governance tracker.
+5. Run retention purge job for expired preview artifacts:
+   - Workflow: `preview-artifact-retention`
+   - Tool: `node tools/purge-preview-artifacts.mjs --root <path> --retention-days <n>`
 
 ## Escalation
 1. P1 (tenant data isolation risk): immediate rollback and security incident process.
