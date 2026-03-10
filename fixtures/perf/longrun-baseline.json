@@ -1,0 +1,10 @@
+{
+  "metrics": {
+    "validate": {
+      "p95Ms": 50
+    },
+    "generate": {
+      "p95Ms": 60
+    }
+  }
+}

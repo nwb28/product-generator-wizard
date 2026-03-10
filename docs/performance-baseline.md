@@ -36,3 +36,4 @@ Run this command in a dedicated optional performance job first. Once stable over
 
 Current dedicated workflow:
 - `.github/workflows/nonfunctional-reliability.yml` (scheduled weekly + manual dispatch)
+- `.github/workflows/perf-trend.yml` (nightly long-run trend profile with artifacts)
