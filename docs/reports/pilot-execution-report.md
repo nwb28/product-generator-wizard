@@ -27,3 +27,7 @@
 
 ## Decision
 - Pilot run outcome: Ready for remediation closeout and docs handoff.
+
+## Linked Phase 7 Pilot
+- Preview/onboarding simulation evidence is captured in:
+  - `docs/reports/pilot-preview-execution-report.md`

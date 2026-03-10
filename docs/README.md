@@ -42,3 +42,4 @@ Documentation is organized by domain so operational and governance assets stay d
 
 ## Reports
 - `docs/reports/pilot-execution-report.md`
+- `docs/reports/pilot-preview-execution-report.md`
