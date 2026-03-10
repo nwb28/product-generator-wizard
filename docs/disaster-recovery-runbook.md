@@ -32,6 +32,15 @@ This command:
 3. Verifies tree hash parity between source and restored output.
 4. Verifies required restored files exist.
 
+Drill report command:
+
+```bash
+npm run dr:report
+```
+
+Scheduled drill workflow:
+- `.github/workflows/dr-drill.yml`
+
 ## Incident Procedure
 1. Freeze release promotion while recovery is in progress.
 2. Restore latest known-good artifact snapshot.
