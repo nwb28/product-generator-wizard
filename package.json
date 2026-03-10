@@ -24,6 +24,7 @@
     "dr:report": "node tools/dr-drill-report.mjs",
     "synthetic:probe": "npm run build --workspace @pgw/packages-contracts && npm run build --workspace @pgw/apps-generator-api && node tools/synthetic-probe.mjs",
     "quota:review": "npm run build --workspace @pgw/apps-generator-api && node tools/tenant-quota-review.mjs config/tenant-quotas.json",
+    "sbom:generate": "mkdir -p .tmp && npm sbom --sbom-format cyclonedx --sbom-type application > .tmp/sbom.cdx.json",
     "smoke:api": "node tools/api-smoke.mjs",
     "smoke:ui": "node tools/ui-smoke.mjs"
   },
