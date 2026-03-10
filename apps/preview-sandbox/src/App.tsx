@@ -17,6 +17,9 @@ export function App() {
   const [session, setSession] = useState<PreviewSession | null>(null);
   const [views, setViews] = useState<Array<{ id: string; title: string; payload: Record<string, unknown> }>>([]);
   const [excelSimulation, setExcelSimulation] = useState<{ enabled: boolean; capabilities: string[] } | null>(null);
+  const [workforceSimulation, setWorkforceSimulation] = useState<{ enabled: boolean; capabilities: string[] } | null>(
+    null
+  );
   const [error, setError] = useState('');
 
   const authState = useMemo(() => {
@@ -65,6 +68,7 @@ export function App() {
       });
       setViews(normalizePreviewViews(response.output.previewSession.views));
       setExcelSimulation(response.output.previewSession.excelSimulation ?? { enabled: false, capabilities: [] });
+      setWorkforceSimulation(response.output.previewSession.workforceSimulation ?? { enabled: false, capabilities: [] });
       setSession(transitionPreviewSession(session, 'simulated'));
     } catch (simulationError) {
       setError(simulationError instanceof Error ? simulationError.message : 'Simulation failed.');
@@ -149,6 +153,18 @@ export function App() {
           <p>Enabled: {excelSimulation.enabled ? 'Yes' : 'No'}</p>
           <ul>
             {excelSimulation.capabilities.map((capability) => (
+              <li key={capability}>{capability}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {workforceSimulation ? (
+        <section>
+          <h2>Workforce Simulation</h2>
+          <p>Enabled: {workforceSimulation.enabled ? 'Yes' : 'No'}</p>
+          <ul>
+            {workforceSimulation.capabilities.map((capability) => (
               <li key={capability}>{capability}</li>
             ))}
           </ul>
