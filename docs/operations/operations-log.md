@@ -182,3 +182,12 @@
   - `npm run release:check`
   - `.github/workflows/ci.yml`
   - `.github/workflows/generator-contract-gate.yml`
+
+## Enterprise Ticket - Dependency Policy Gate
+- Added dependency policy baseline `config/dependency-policy.json`.
+- Added lockfile policy enforcement `tools/enforce-dependency-policy.mjs` and tests `tools/enforce-dependency-policy.test.mjs`.
+- Enforced dependency policy checks in:
+  - `npm run release:check`
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/generator-contract-gate.yml`
+  - `.github/workflows/security-scan.yml`

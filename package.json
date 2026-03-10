@@ -32,7 +32,8 @@
     "workflow:check": "node tools/verify-workflow-command-references.mjs --workflows .github/workflows --package package.json",
     "governance:bootstrap": "node tools/bootstrap-governance-controls.mjs --config config/governance-bootstrap.json",
     "layout:check": "node tools/verify-repository-layout.mjs --policy config/repository-layout-policy.json",
-    "slo:check": "node tools/validate-slo-policy.mjs --policy config/slo-policy.json"
+    "slo:check": "node tools/validate-slo-policy.mjs --policy config/slo-policy.json",
+    "deps:policy:check": "node tools/enforce-dependency-policy.mjs --policy config/dependency-policy.json --lockfile package-lock.json"
   },
   "engines": {
     "node": ">=20"

@@ -1,0 +1,6 @@
+{
+  "deniedPackages": [
+    "event-stream",
+    "left-pad"
+  ]
+}

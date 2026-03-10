@@ -36,6 +36,7 @@
 | REM-032 | Post-merge governance bootstrap consistency gap | Medium | Closed | DevOps | Added unified governance bootstrap orchestration command, baseline config, and runbook for dry-run/apply control initialization. |
 | REM-033 | Repository layout drift detection gap | Medium | Closed | Tech Lead | Added repository layout policy with CI/release enforcement to protect folder hygiene and prevent tracked transient artifacts at repo root. |
 | REM-034 | SLO/error-budget policy drift gap | Medium | Closed | SRE | Added SLO policy-as-code validation and enforced checks across CI/release gates. |
+| REM-035 | Dependency policy enforcement gap | High | Closed | Security | Added dependency denylist policy validation against lockfile and enforced checks in CI, generator gate, and security scan workflows. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.

@@ -24,6 +24,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Enforce dependency policy
+        run: npm run deps:policy:check
+
       - name: Run npm audit report
         run: npm audit --json > npm-audit-report.json || true
 
