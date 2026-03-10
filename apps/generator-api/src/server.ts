@@ -1,5 +1,11 @@
 import express from 'express';
 import { compileManifest } from '@pgw/packages-compiler/dist/index.js';
+import {
+  createPilotLoanAdapter,
+  createProductAdapterRegistry,
+  validateBuiltProductIntake,
+  validateBuiltProductWithRegistry
+} from '@pgw/packages-product-adapters/dist/index.js';
 import { generateHumanReviewDocument } from '@pgw/packages-review-doc/dist/index.js';
 import { generatePilotScaffold } from '@pgw/packages-scaffold-templates/dist/index.js';
 import { toHumanSummary, validateIntake } from '@pgw/packages-validator/dist/index.js';
@@ -102,6 +108,7 @@ export function createApp(options: AppOptions = {}) {
       ? createRedisIdempotencyStore({ executor: redisExecutor, ttlMs: idempotencyTtlMs })
       : createIdempotencyStore({ ttlMs: idempotencyTtlMs }));
   const fallbackIdempotencyStore = createIdempotencyStore({ ttlMs: idempotencyTtlMs });
+  const productAdapterRegistry = createProductAdapterRegistry([createPilotLoanAdapter()]);
 
   app.use((req, res, next) => {
     const span = telemetry.startSpan('http.server.request', {
@@ -413,6 +420,184 @@ export function createApp(options: AppOptions = {}) {
     } catch (error) {
       handleBackendUnavailable(res, error);
     }
+  });
+
+  app.post('/preview/validate', async (req, res) => {
+    const principal = await authenticatePrincipal(req);
+    const tenantId = resolveTenantId(req);
+    const requestId = resolveRequestId(req.header('x-request-id'));
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'preview:validate');
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('preview:validate', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
+      return;
+    }
+
+    if (!principal || !hasWizardAccess(principal)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/preview/validate',
+        action: 'preview-validate',
+        outcome: 'deny',
+        principalSub: principal?.sub
+      });
+      res.status(403).json({ message: 'Forbidden' });
+      return;
+    }
+
+    const validation = validateBuiltProductIntake(req.body as any);
+    emitAudit(auditLogger, {
+      requestId,
+      tenantId,
+      endpoint: '/preview/validate',
+      action: 'preview-validate',
+      outcome: validation.valid ? 'success' : 'failure',
+      principalSub: principal.sub
+    });
+    res.status(validation.valid ? 200 : 400).json(validation);
+  });
+
+  app.post('/preview/simulate', async (req, res) => {
+    const principal = await authenticatePrincipal(req);
+    const tenantId = resolveTenantId(req);
+    const requestId = resolveRequestId(req.header('x-request-id'));
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'preview:simulate');
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('preview:simulate', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
+      return;
+    }
+
+    if (!principal || !hasWizardAccess(principal)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/preview/simulate',
+        action: 'preview-simulate',
+        outcome: 'deny',
+        principalSub: principal?.sub
+      });
+      res.status(403).json({ message: 'Forbidden' });
+      return;
+    }
+
+    const validation = validateBuiltProductWithRegistry(req.body as any, productAdapterRegistry);
+    if (!validation.valid) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/preview/simulate',
+        action: 'preview-simulate',
+        outcome: 'failure',
+        principalSub: principal.sub
+      });
+      res.status(400).json(validation);
+      return;
+    }
+
+    const body = req.body as any;
+    const adapter = productAdapterRegistry.resolve({
+      adapterId: body.adapter.id,
+      adapterVersion: body.adapter.version,
+      tenantId: body.tenant.id,
+      productId: body.product.id,
+      metadata: {
+        productType: body.product.type,
+        displayName: body.product.displayName,
+        canonicalMappings: body.mappings ?? [],
+        excelCapabilities: body.integrations?.excelPlugin?.enabled ? ['enabled'] : [],
+        workforceCapabilities: body.integrations?.workforce?.enabled ? ['enabled'] : [],
+        uiScreens: body.preview?.uiScreens ?? []
+      }
+    });
+    const output = adapter.transform({
+      adapterId: body.adapter.id,
+      adapterVersion: body.adapter.version,
+      tenantId: body.tenant.id,
+      productId: body.product.id,
+      metadata: {
+        productType: body.product.type,
+        displayName: body.product.displayName,
+        canonicalMappings: body.mappings ?? [],
+        excelCapabilities: body.integrations?.excelPlugin?.enabled ? ['enabled'] : [],
+        workforceCapabilities: body.integrations?.workforce?.enabled ? ['enabled'] : [],
+        uiScreens: body.preview?.uiScreens ?? []
+      }
+    });
+
+    emitAudit(auditLogger, {
+      requestId,
+      tenantId,
+      endpoint: '/preview/simulate',
+      action: 'preview-simulate',
+      outcome: 'success',
+      principalSub: principal.sub
+    });
+    res.status(200).json({
+      validation,
+      output
+    });
+  });
+
+  app.post('/preview/report', async (req, res) => {
+    const principal = await authenticatePrincipal(req);
+    const tenantId = resolveTenantId(req);
+    const requestId = resolveRequestId(req.header('x-request-id'));
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'preview:report');
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('preview:report', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
+      return;
+    }
+
+    if (!principal || !hasWizardAccess(principal)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/preview/report',
+        action: 'preview-report',
+        outcome: 'deny',
+        principalSub: principal?.sub
+      });
+      res.status(403).json({ message: 'Forbidden' });
+      return;
+    }
+
+    const validation = validateBuiltProductWithRegistry(req.body as any, productAdapterRegistry);
+    const readinessScore = Math.max(0, 100 - validation.summary.warning * 5 - validation.summary.blocking * 20);
+    const recommendation = validation.summary.blocking > 0 ? 'No-Go' : 'Go';
+
+    emitAudit(auditLogger, {
+      requestId,
+      tenantId,
+      endpoint: '/preview/report',
+      action: 'preview-report',
+      outcome: validation.valid ? 'success' : 'failure',
+      principalSub: principal.sub
+    });
+    res.status(validation.valid ? 200 : 400).json({
+      adapter: (req.body as any).adapter ?? null,
+      summary: validation.summary,
+      diagnostics: validation.diagnostics,
+      readinessScore,
+      recommendation
+    });
   });
 
   app.use((error: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {

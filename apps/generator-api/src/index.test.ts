@@ -14,6 +14,29 @@ import { createApp } from './server.js';
 
 const app = createApp();
 
+const builtProductPayload = {
+  schemaVersion: '1.0.0',
+  adapter: { id: 'pilot-loan-adapter', version: '1.0.0' },
+  tenant: { id: 'tenant-preview' },
+  product: { id: 'preview-product-01', type: 'loan', displayName: 'Preview Product' },
+  integrations: {
+    workforce: { enabled: true, details: { profile: 'default' } },
+    excelPlugin: { enabled: true, details: { mode: 'refresh' } }
+  },
+  permissions: {
+    bucs: [{ role: 'reader', permissions: ['read'] }],
+    firm: [{ role: 'writer', permissions: ['read', 'write'] }],
+    company: [{ role: 'admin', permissions: ['read', 'write', 'approve'] }]
+  },
+  mappings: [{ canonicalModel: 'loan', sourcePath: '$.loan', confidence: 0.95 }],
+  preview: {
+    uiScreens: [
+      { id: 'summary', title: 'Summary' },
+      { id: 'details', title: 'Details' }
+    ]
+  }
+};
+
 async function authHeader(role: 'wizard-admin' | 'product-generator' = 'wizard-admin') {
   const token = await signTestToken('test-user', [role]);
   return `Bearer ${token}`;
@@ -205,6 +228,47 @@ test('POST /review-document returns markdown', async () => {
     .send(intake);
   assert.equal(response.status, 200);
   assert.match(response.body.markdown, /Human Review Document/);
+});
+
+test('POST /preview/validate returns 200 for valid built-product payload', async () => {
+  const response = await supertest(app)
+    .post('/preview/validate')
+    .set('authorization', await authHeader())
+    .send(builtProductPayload);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.valid, true);
+  assert.equal(response.body.summary.blocking, 0);
+});
+
+test('POST /preview/validate returns 403 without authorization token', async () => {
+  const response = await supertest(app).post('/preview/validate').send(builtProductPayload);
+  assert.equal(response.status, 403);
+});
+
+test('POST /preview/simulate returns transformed preview session output', async () => {
+  const response = await supertest(app)
+    .post('/preview/simulate')
+    .set('authorization', await authHeader())
+    .send(builtProductPayload);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.validation.valid, true);
+  assert.equal(response.body.output.previewSession.sessionId, 'tenant-preview-preview-product-01-pilot-loan-adapter');
+});
+
+test('POST /preview/report returns no-go when built-product payload is invalid', async () => {
+  const response = await supertest(app)
+    .post('/preview/report')
+    .set('authorization', await authHeader())
+    .send({
+      ...builtProductPayload,
+      mappings: []
+    });
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body.recommendation, 'No-Go');
+  assert.ok(response.body.summary.blocking > 0);
 });
 
 test('POST /generate returns 429 when tenant-principal key exceeds limit', async () => {

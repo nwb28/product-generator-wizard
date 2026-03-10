@@ -93,3 +93,51 @@ paths:
           description: Unsupported content type
         '429':
           description: Rate limited
+  /preview/validate:
+    post:
+      summary: Validate built-product payload for preview simulation
+      responses:
+        '200':
+          description: Payload valid for preview
+        '400':
+          description: Payload invalid
+        '403':
+          description: Not authorized
+        '413':
+          description: Payload exceeds maximum allowed size
+        '415':
+          description: Unsupported content type
+        '429':
+          description: Rate limited
+  /preview/simulate:
+    post:
+      summary: Simulate preview session output from built-product payload
+      responses:
+        '200':
+          description: Preview simulation output generated
+        '400':
+          description: Validation or compatibility failure
+        '403':
+          description: Not authorized
+        '413':
+          description: Payload exceeds maximum allowed size
+        '415':
+          description: Unsupported content type
+        '429':
+          description: Rate limited
+  /preview/report:
+    post:
+      summary: Generate pre-inclusion compatibility report from built-product payload
+      responses:
+        '200':
+          description: Report generated with Go recommendation
+        '400':
+          description: Report generated with No-Go due to blockers
+        '403':
+          description: Not authorized
+        '413':
+          description: Payload exceeds maximum allowed size
+        '415':
+          description: Unsupported content type
+        '429':
+          description: Rate limited
