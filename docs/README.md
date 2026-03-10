@@ -12,6 +12,8 @@ Documentation is organized by domain so operational and governance assets stay d
 - `docs/reference/api-client.md`
 - `docs/reference/roadmap.md`
 - `docs/reference/phase7-architecture-rfc.md`
+- `docs/reference/adapter-authoring-guide.md`
+- `docs/reference/preview-operator-guide.md`
 
 ## Operations
 - `docs/operations/deployment-workflow.md`
@@ -25,6 +27,7 @@ Documentation is organized by domain so operational and governance assets stay d
 - `docs/operations/performance-baseline.md`
 - `docs/operations/operations-log.md`
 - `docs/operations/audit-forwarder.md`
+- `docs/operations/preview-runbook.md`
 
 ## Governance
 - `docs/governance/contract-governance.md`
@@ -35,6 +38,7 @@ Documentation is organized by domain so operational and governance assets stay d
 - `docs/governance/remediation-tracker.md`
 - `docs/governance/sbom-process.md`
 - `docs/governance/adapter-versioning-policy.md`
+- `docs/governance/pre-inclusion-policy.md`
 
 ## Reports
 - `docs/reports/pilot-execution-report.md`
