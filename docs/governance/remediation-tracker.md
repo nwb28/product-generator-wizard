@@ -10,7 +10,7 @@
 | REM-006 | Preview audit-chain coverage | Medium | Closed | Backend | Added tests for preview success/deny outcomes in tamper-evident audit logging. |
 | REM-007 | Preview gate CI | Medium | Closed | DevOps | Added `preview-contract-gate` workflow and deterministic fixture enforcement. |
 | REM-008 | Pre-inclusion docs pack | Medium | Closed | Tech Lead | Published preview runbook, pre-inclusion policy, adapter authoring, and operator guides. |
-| REM-009 | Tracked `.test-dist` artifacts | Medium | Open | Frontend | Remove compiled test artifacts from source control and enforce clean generation at test runtime. |
+| REM-009 | Tracked `.test-dist` artifacts | Medium | Closed | Frontend | Removed tracked `.test-dist` artifacts and enforced clean-generation policy in CI. |
 | REM-010 | Branch protection for preview gate | High | Closed | DevOps | `main` now requires `preview-contract-gate` with strict checks and review enforcement. |
 | REM-011 | Preview threat model publication | Medium | Closed | Security | Published preview threat model with tenant/isolation/retention controls and residual risk tracking. |
 | REM-012 | Release evidence bundling | Medium | Closed | DevOps | Added release evidence workflow and bundle artifact linking preview gate, SBOM, and security scan outputs. |
@@ -28,4 +28,4 @@
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.
 2. Phase 7 pilot implementation risks are reduced with core controls closed.
-3. Four enterprise hardening items remain open and are promoted to next ticket set.
+3. Enterprise hardening backlog items in this phase are closed; next tickets focus on continuous control maturity.
