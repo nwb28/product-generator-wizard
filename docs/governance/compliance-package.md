@@ -43,6 +43,7 @@ Define minimum controls for operating Product Generator Wizard in regulated ente
 3. Latest passing `security-scan` report.
 4. Latest passing `sbom` artifact.
 5. Latest passing `release-evidence-bundle` artifact (`release-evidence.json` + `release-evidence.md`).
-6. Latest passing `release:check` output.
-7. Current environment config validation (`npm run config:check`).
-8. Current DR validation (`npm run dr:check`).
+6. Provenance attestation for the release evidence artifact.
+7. Latest passing `release:check` output.
+8. Current environment config validation (`npm run config:check`).
+9. Current DR validation (`npm run dr:check`).

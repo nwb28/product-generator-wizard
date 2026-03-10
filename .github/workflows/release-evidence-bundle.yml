@@ -16,6 +16,8 @@ on:
 
 permissions:
   contents: read
+  id-token: write
+  attestations: write
 
 jobs:
   release-evidence-bundle:
@@ -66,3 +68,8 @@ jobs:
           path: .tmp/release-evidence
           if-no-files-found: error
           retention-days: 30
+
+      - name: Attest release evidence artifact provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: .tmp/release-evidence/**

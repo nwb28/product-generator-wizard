@@ -61,3 +61,9 @@
   - `preview-contract-gate`
   - `security-scan`
   - `release-evidence-bundle`
+
+## Enterprise Ticket - Release Evidence Attestation
+- Updated `.github/workflows/release-evidence-bundle.yml` to request:
+  - `id-token: write`
+  - `attestations: write`
+- Added `actions/attest-build-provenance@v2` step for `.tmp/release-evidence/**`.

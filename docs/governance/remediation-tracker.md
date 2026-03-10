@@ -15,6 +15,7 @@
 | REM-011 | Preview threat model publication | Medium | Closed | Security | Published preview threat model with tenant/isolation/retention controls and residual risk tracking. |
 | REM-012 | Release evidence bundling | Medium | Closed | DevOps | Added release evidence workflow and bundle artifact linking preview gate, SBOM, and security scan outputs. |
 | REM-013 | Branch protection policy drift | High | Closed | DevOps | Added policy-as-code branch protection validation and required additional checks on `main`. |
+| REM-014 | Release evidence provenance attestation gap | Medium | Closed | DevOps | Added GitHub artifact provenance attestation for release evidence bundle outputs. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.
