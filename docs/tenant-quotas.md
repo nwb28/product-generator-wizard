@@ -16,3 +16,4 @@ For each request endpoint:
 1. Quotas are enforced per tenant + principal identity key.
 2. Distributed deployments should set `WIZARD_REDIS_URL` so quota enforcement is consistent across instances.
 3. Keep tenant quota updates under change control and version review.
+4. Invalid quota config files cause API startup failure (fail-fast).

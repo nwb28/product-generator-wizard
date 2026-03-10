@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import supertest from 'supertest';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import intake from '@pgw/packages-contracts/dist/examples/intake.valid.v1.json' with { type: 'json' };
 import type { AuditEvent } from './audit.js';
 import { signTestToken } from './auth.js';
@@ -47,6 +50,24 @@ test('GET /readyz returns 503 when configured redis dependency check fails', asy
   assert.equal(response.status, 503);
   assert.equal(response.body.ready, false);
   assert.equal(response.body.checks.redis, 'failed');
+});
+
+test('createApp fails fast when tenant quota config file is invalid', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'pgw-invalid-quota-'));
+  const configPath = join(dir, 'tenant-quotas.json');
+  writeFileSync(configPath, JSON.stringify({ default: { perMinute: 0 } }), 'utf8');
+
+  const previous = process.env.WIZARD_TENANT_QUOTA_CONFIG_PATH;
+  process.env.WIZARD_TENANT_QUOTA_CONFIG_PATH = configPath;
+  try {
+    assert.throws(() => createApp(), /Tenant quota config/);
+  } finally {
+    if (previous === undefined) {
+      delete process.env.WIZARD_TENANT_QUOTA_CONFIG_PATH;
+    } else {
+      process.env.WIZARD_TENANT_QUOTA_CONFIG_PATH = previous;
+    }
+  }
 });
 
 test('GET /authz/wizard-entry returns 403 without auth token', async () => {

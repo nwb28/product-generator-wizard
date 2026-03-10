@@ -14,7 +14,7 @@ import {
 import { createRateLimiter, createRedisRateLimiter, type RateLimitCheckResult, type RateLimiter } from './rate-limit.js';
 import { createRedisExecutorFromEnv, type RedisExecutor } from './redis-executor.js';
 import { createTelemetryClient, type TelemetryClient, type TelemetrySpan } from './telemetry.js';
-import { createTenantQuotaPolicy, loadTenantQuotaConfigFromFile } from './tenant-quotas.js';
+import { createTenantQuotaPolicy, loadTenantQuotaConfigOrThrow } from './tenant-quotas.js';
 
 type AppOptions = {
   rateLimiter?: RateLimiter;
@@ -35,7 +35,7 @@ export function createApp(options: AppOptions = {}) {
     process.env.NODE_ENV === 'test' ? 10_000 : 120
   );
   const tenantQuotaPath = process.env.WIZARD_TENANT_QUOTA_CONFIG_PATH ?? 'config/tenant-quotas.json';
-  const tenantQuotaConfig = loadTenantQuotaConfigFromFile(tenantQuotaPath);
+  const tenantQuotaConfig = loadTenantQuotaConfigOrThrow(tenantQuotaPath);
   const tenantQuotaPolicy = createTenantQuotaPolicy(tenantQuotaConfig, maxRatePerMinute);
   const idempotencyTtlMs = readEnvPositiveInteger('WIZARD_IDEMPOTENCY_TTL_MS', 86_400_000);
   const limiterByPerMinute = new Map<number, RateLimiter>();
