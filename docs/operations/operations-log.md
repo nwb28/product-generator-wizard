@@ -117,3 +117,8 @@
   - `.github/CODEOWNERS.template`
   - `tools/render-codeowners.mjs`
 - Updated `main` branch protection to require code owner reviews (`require_code_owner_reviews=true`).
+
+## Enterprise Ticket - Deploy Attestation Path CI Check
+- Added `tools/verify-deploy-attestation-path.mjs` and tests.
+- Wired the check into `.github/workflows/ci.yml`.
+- CI now fails if deploy workflow loses attestation run resolution, artifact download, or verification step.
