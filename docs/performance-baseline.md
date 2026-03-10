@@ -33,3 +33,6 @@ The script will:
 
 ## Usage in CI
 Run this command in a dedicated optional performance job first. Once stable over multiple runs, elevate to a required gate for release candidates.
+
+Current dedicated workflow:
+- `.github/workflows/nonfunctional-reliability.yml` (scheduled weekly + manual dispatch)
