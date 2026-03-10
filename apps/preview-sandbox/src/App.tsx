@@ -16,6 +16,7 @@ export function App() {
   const [adapterVersion, setAdapterVersion] = useState('1.0.0');
   const [session, setSession] = useState<PreviewSession | null>(null);
   const [views, setViews] = useState<Array<{ id: string; title: string; payload: Record<string, unknown> }>>([]);
+  const [excelSimulation, setExcelSimulation] = useState<{ enabled: boolean; capabilities: string[] } | null>(null);
   const [error, setError] = useState('');
 
   const authState = useMemo(() => {
@@ -47,7 +48,7 @@ export function App() {
         product: { id: productId, type: 'loan', displayName: productId },
         integrations: {
           workforce: { enabled: true, details: { profile: 'default' } },
-          excelPlugin: { enabled: true, details: { mode: 'refresh' } }
+          excelPlugin: { enabled: true, details: { mode: 'refresh', capabilities: ['refresh', 'export'] } }
         },
         permissions: {
           bucs: [{ role: 'reader', permissions: ['read'] }],
@@ -63,6 +64,7 @@ export function App() {
         }
       });
       setViews(normalizePreviewViews(response.output.previewSession.views));
+      setExcelSimulation(response.output.previewSession.excelSimulation ?? { enabled: false, capabilities: [] });
       setSession(transitionPreviewSession(session, 'simulated'));
     } catch (simulationError) {
       setError(simulationError instanceof Error ? simulationError.message : 'Simulation failed.');
@@ -136,6 +138,18 @@ export function App() {
               <li key={view.id}>
                 <strong>{view.title}</strong> ({view.id})
               </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {excelSimulation ? (
+        <section>
+          <h2>Excel Plugin Simulation</h2>
+          <p>Enabled: {excelSimulation.enabled ? 'Yes' : 'No'}</p>
+          <ul>
+            {excelSimulation.capabilities.map((capability) => (
+              <li key={capability}>{capability}</li>
             ))}
           </ul>
         </section>

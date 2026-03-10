@@ -33,6 +33,14 @@ export function createPilotLoanAdapter(): ProductAdapter {
         tenantId: input.tenantId,
         productId: input.productId,
         views,
+        excelSimulation: {
+          enabled: (metadata.excelCapabilities ?? []).length > 0,
+          capabilities: [...(metadata.excelCapabilities ?? [])].sort((a, b) => a.localeCompare(b))
+        },
+        workforceSimulation: {
+          enabled: (metadata.workforceCapabilities ?? []).length > 0,
+          capabilities: [...(metadata.workforceCapabilities ?? [])].sort((a, b) => a.localeCompare(b))
+        },
         generatedArtifacts: views.map((view) => ({
           path: `preview/${view.id}.json`,
           hash: deterministicHashToken(view.id, view.title)

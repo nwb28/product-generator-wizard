@@ -34,6 +34,7 @@ test('pilot adapter transform produces deterministic sorted preview views', () =
   const previewSession = output.previewSession as {
     views: Array<{ id: string }>;
     generatedArtifacts: Array<{ path: string; hash: string }>;
+    excelSimulation: { enabled: boolean; capabilities: string[] };
   };
   assert.equal(output.compatibility.blocking, 0);
   assert.equal(output.compatibility.warning, 0);
@@ -42,6 +43,8 @@ test('pilot adapter transform produces deterministic sorted preview views', () =
     ['details', 'summary']
   );
   assert.equal(previewSession.generatedArtifacts.length, 2);
+  assert.equal(previewSession.excelSimulation.enabled, true);
+  assert.deepEqual(previewSession.excelSimulation.capabilities, ['refresh']);
 });
 
 test('pilot adapter emits warnings and blockers for incomplete metadata', () => {

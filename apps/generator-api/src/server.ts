@@ -507,6 +507,8 @@ export function createApp(options: AppOptions = {}) {
     }
 
     const body = req.body as any;
+    const excelCapabilities = resolveCapabilities(body.integrations?.excelPlugin?.details, 'excel');
+    const workforceCapabilities = resolveCapabilities(body.integrations?.workforce?.details, 'workforce');
     const adapter = productAdapterRegistry.resolve({
       adapterId: body.adapter.id,
       adapterVersion: body.adapter.version,
@@ -516,8 +518,8 @@ export function createApp(options: AppOptions = {}) {
         productType: body.product.type,
         displayName: body.product.displayName,
         canonicalMappings: body.mappings ?? [],
-        excelCapabilities: body.integrations?.excelPlugin?.enabled ? ['enabled'] : [],
-        workforceCapabilities: body.integrations?.workforce?.enabled ? ['enabled'] : [],
+        excelCapabilities: body.integrations?.excelPlugin?.enabled ? excelCapabilities : [],
+        workforceCapabilities: body.integrations?.workforce?.enabled ? workforceCapabilities : [],
         uiScreens: body.preview?.uiScreens ?? []
       }
     });
@@ -530,8 +532,8 @@ export function createApp(options: AppOptions = {}) {
         productType: body.product.type,
         displayName: body.product.displayName,
         canonicalMappings: body.mappings ?? [],
-        excelCapabilities: body.integrations?.excelPlugin?.enabled ? ['enabled'] : [],
-        workforceCapabilities: body.integrations?.workforce?.enabled ? ['enabled'] : [],
+        excelCapabilities: body.integrations?.excelPlugin?.enabled ? excelCapabilities : [],
+        workforceCapabilities: body.integrations?.workforce?.enabled ? workforceCapabilities : [],
         uiScreens: body.preview?.uiScreens ?? []
       }
     });
@@ -771,6 +773,23 @@ function resolveRedisFallbackMode(value: string | undefined): 'fail-open' | 'fai
     return 'fail-closed';
   }
   return 'fail-open';
+}
+
+function resolveCapabilities(details: unknown, fallbackCapability: string): string[] {
+  if (!details || typeof details !== 'object') {
+    return [fallbackCapability];
+  }
+
+  const maybe = (details as { capabilities?: unknown }).capabilities;
+  if (!Array.isArray(maybe)) {
+    return [fallbackCapability];
+  }
+
+  const capabilities = maybe.filter((entry): entry is string => typeof entry === 'string' && entry.length > 0);
+  if (capabilities.length === 0) {
+    return [fallbackCapability];
+  }
+  return capabilities;
 }
 
 function handleBackendUnavailable(res: express.Response, error: unknown): void {

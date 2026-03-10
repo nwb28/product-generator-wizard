@@ -13,6 +13,14 @@ export type PreviewSimulateResponse = {
                 title: string;
                 payload: Record<string, unknown>;
             }>;
+            excelSimulation?: {
+                enabled: boolean;
+                capabilities: string[];
+            };
+            workforceSimulation?: {
+                enabled: boolean;
+                capabilities: string[];
+            };
         };
     };
 };
