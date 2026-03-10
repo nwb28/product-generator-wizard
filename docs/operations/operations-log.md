@@ -133,3 +133,8 @@
 - Added `tools/check-retention-purge-slo.mjs` and tests.
 - Added scheduled monitor workflow: `.github/workflows/retention-observability.yml`.
 - Monitor fails if the latest successful purge run is older than 26 hours and opens a deduplicated alert issue.
+
+## Enterprise Ticket - Control Evidence Export Package
+- Added `tools/export-control-evidence.mjs` and tests.
+- Added scheduled workflow `.github/workflows/control-evidence-export.yml`.
+- Workflow publishes auditable control package artifact (`control-evidence-*`) with manifest and summary.

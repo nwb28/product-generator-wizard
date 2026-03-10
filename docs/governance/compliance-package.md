@@ -53,3 +53,4 @@ Related reference:
 7. Latest passing `release:check` output.
 8. Current environment config validation (`npm run config:check`).
 9. Current DR validation (`npm run dr:check`).
+10. Current control-evidence export artifact (`control-evidence-*`).

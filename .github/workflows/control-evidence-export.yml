@@ -1,0 +1,32 @@
+name: control-evidence-export
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 7 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  export-control-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate control evidence package
+        run: node tools/export-control-evidence.mjs --out .tmp/control-evidence
+
+      - name: Upload control evidence artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: control-evidence-${{ github.run_number }}
+          path: .tmp/control-evidence
+          retention-days: 30
+          if-no-files-found: error

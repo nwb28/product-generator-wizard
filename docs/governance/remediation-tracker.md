@@ -28,6 +28,7 @@
 | REM-024 | Deploy attestation path regression detection gap | Medium | Closed | DevOps | Added CI verification script ensuring deploy workflow retains attestation run/download/verify steps. |
 | REM-025 | Branch protection remediation runbook automation gap | Medium | Closed | DevOps | Added approval-gated remediation workflow and reusable baseline apply script. |
 | REM-026 | Retention purge observability and stale-run alert gap | Medium | Closed | DevOps | Added scheduled retention observability workflow with stale-run issue alerting. |
+| REM-027 | Control evidence export packaging gap | Medium | Closed | DevOps | Added control-evidence export utility and scheduled artifact workflow for audit-ready bundles. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.
