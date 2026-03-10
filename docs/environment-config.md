@@ -22,6 +22,9 @@ Behavior:
 ### Distributed Store (Recommended for multi-instance deployments)
 - `WIZARD_REDIS_URL` (Redis connection URL, enables distributed rate limit and idempotency stores)
 - `WIZARD_TENANT_QUOTA_CONFIG_PATH` (optional, path to tenant quota config JSON; default `config/tenant-quotas.json`)
+- `WIZARD_REDIS_TIMEOUT_MS` (optional, Redis operation timeout in milliseconds; default `250`)
+- `WIZARD_REDIS_CIRCUIT_BREAKER_THRESHOLD` (optional, consecutive failure threshold before opening circuit; default `3`)
+- `WIZARD_REDIS_CIRCUIT_BREAKER_COOLDOWN_MS` (optional, circuit cooldown duration in milliseconds; default `30000`)
 
 ### Audit Logging Hardening
 - `WIZARD_AUDIT_HMAC_SECRET` (optional but recommended in staging/production; signs audit chain records)
@@ -46,6 +49,7 @@ npm test
 - Keep issuer and audience values immutable per environment.
 - Run `npm run config:check` in deployment pipelines before releasing.
 - Set `WIZARD_AUDIT_HMAC_SECRET` for tamper-evident signed audit records.
+- Configure Redis resilience values and verify fallback behavior in synthetic/release checks.
 
 ## Secret Sources
 Recommended secret flow:

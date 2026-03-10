@@ -38,7 +38,10 @@ export function createApp(options: AppOptions = {}) {
   const tenantQuotaConfig = loadTenantQuotaConfigOrThrow(tenantQuotaPath);
   const tenantQuotaPolicy = createTenantQuotaPolicy(tenantQuotaConfig, maxRatePerMinute);
   const idempotencyTtlMs = readEnvPositiveInteger('WIZARD_IDEMPOTENCY_TTL_MS', 86_400_000);
+  const distributedRateLimiterEnabled = Boolean(redisExecutor) && !options.rateLimiter;
+  const distributedIdempotencyEnabled = Boolean(redisExecutor) && !options.idempotencyStore;
   const limiterByPerMinute = new Map<number, RateLimiter>();
+  const fallbackLimiterByPerMinute = new Map<number, RateLimiter>();
   const rateLimiterFactory = (perMinute: number): RateLimiter => {
     if (options.rateLimiter) {
       return options.rateLimiter;
@@ -57,11 +60,21 @@ export function createApp(options: AppOptions = {}) {
     limiterByPerMinute.set(perMinute, next);
     return next;
   };
+  const resolveFallbackRateLimiter = (perMinute: number): RateLimiter => {
+    const existing = fallbackLimiterByPerMinute.get(perMinute);
+    if (existing) {
+      return existing;
+    }
+    const next = createRateLimiter({ maxRequests: perMinute, windowMs: 60_000 });
+    fallbackLimiterByPerMinute.set(perMinute, next);
+    return next;
+  };
   const idempotencyStore =
     options.idempotencyStore ??
     (redisExecutor
       ? createRedisIdempotencyStore({ executor: redisExecutor, ttlMs: idempotencyTtlMs })
       : createIdempotencyStore({ ttlMs: idempotencyTtlMs }));
+  const fallbackIdempotencyStore = createIdempotencyStore({ ttlMs: idempotencyTtlMs });
 
   app.use((req, res, next) => {
     const span = telemetry.startSpan('http.server.request', {
@@ -109,11 +122,12 @@ export function createApp(options: AppOptions = {}) {
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
     const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'authz:wizard-entry');
-    const rateLimit = await resolveRateLimiter(rateLimitPerMinute).check(
+    const rateLimit = await checkRateLimit(
       'authz:wizard-entry',
-      resolveRequestIdentity(req, principal?.sub)
+      resolveRequestIdentity(req, principal?.sub),
+      rateLimitPerMinute
     );
-    if (!applyRateLimit(res, rateLimit)) {
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
       emitAudit(auditLogger, {
         requestId,
         tenantId,
@@ -152,8 +166,8 @@ export function createApp(options: AppOptions = {}) {
   app.post('/validate', async (req, res) => {
     const tenantId = resolveTenantId(req);
     const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'validate');
-    const rateLimit = await resolveRateLimiter(rateLimitPerMinute).check('validate', resolveRequestIdentity(req));
-    if (!applyRateLimit(res, rateLimit)) {
+    const rateLimit = await checkRateLimit('validate', resolveRequestIdentity(req), rateLimitPerMinute);
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
       return;
     }
 
@@ -171,8 +185,8 @@ export function createApp(options: AppOptions = {}) {
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
     const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'compile');
-    const rateLimit = await resolveRateLimiter(rateLimitPerMinute).check('compile', resolveRequestIdentity(req, principal?.sub));
-    if (!applyRateLimit(res, rateLimit)) {
+    const rateLimit = await checkRateLimit('compile', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
       emitAudit(auditLogger, {
         requestId,
         tenantId,
@@ -227,8 +241,8 @@ export function createApp(options: AppOptions = {}) {
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
     const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'generate');
-    const rateLimit = await resolveRateLimiter(rateLimitPerMinute).check('generate', resolveRequestIdentity(req, principal?.sub));
-    if (!applyRateLimit(res, rateLimit)) {
+    const rateLimit = await checkRateLimit('generate', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
       emitAudit(auditLogger, {
         requestId,
         tenantId,
@@ -256,7 +270,7 @@ export function createApp(options: AppOptions = {}) {
     await runIdempotentJson(
       req,
       res,
-      idempotencyStore,
+      { primary: idempotencyStore, fallback: distributedIdempotencyEnabled ? fallbackIdempotencyStore : undefined },
       'generate',
       resolveRequestIdentity(req, principal.sub),
       async () => {
@@ -283,11 +297,8 @@ export function createApp(options: AppOptions = {}) {
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
     const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'review-document');
-    const rateLimit = await resolveRateLimiter(rateLimitPerMinute).check(
-      'review-document',
-      resolveRequestIdentity(req, principal?.sub)
-    );
-    if (!applyRateLimit(res, rateLimit)) {
+    const rateLimit = await checkRateLimit('review-document', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
       emitAudit(auditLogger, {
         requestId,
         tenantId,
@@ -315,7 +326,7 @@ export function createApp(options: AppOptions = {}) {
     await runIdempotentJson(
       req,
       res,
-      idempotencyStore,
+      { primary: idempotencyStore, fallback: distributedIdempotencyEnabled ? fallbackIdempotencyStore : undefined },
       'review-document',
       resolveRequestIdentity(req, principal.sub),
       async () => {
@@ -338,6 +349,22 @@ export function createApp(options: AppOptions = {}) {
   });
 
   return app;
+
+  async function checkRateLimit(endpoint: string, identity: string, perMinute: number) {
+    const primary = resolveRateLimiter(perMinute);
+    if (!distributedRateLimiterEnabled) {
+      return { result: await primary.check(endpoint, identity), backend: 'primary' as const };
+    }
+
+    try {
+      return { result: await primary.check(endpoint, identity), backend: 'primary' as const };
+    } catch {
+      return {
+        result: await resolveFallbackRateLimiter(perMinute).check(endpoint, identity),
+        backend: 'fallback' as const
+      };
+    }
+  }
 }
 
 function asMessage(error: unknown): string {
@@ -354,10 +381,11 @@ function resolveTenantId(req: express.Request): string {
   return req.header('x-tenant-id') ?? req.header('x-tenant') ?? req.query.tenant?.toString() ?? 'unknown-tenant';
 }
 
-function applyRateLimit(res: express.Response, result: RateLimitCheckResult): boolean {
+function applyRateLimit(res: express.Response, result: RateLimitCheckResult, backend: 'primary' | 'fallback'): boolean {
   res.setHeader('X-RateLimit-Limit', String(result.limit));
   res.setHeader('X-RateLimit-Remaining', String(result.remaining));
   res.setHeader('X-RateLimit-Reset', String(result.resetAtEpochSeconds));
+  res.setHeader('X-RateLimit-Backend', backend);
 
   if (result.allowed) {
     return true;
@@ -387,7 +415,7 @@ function readEnvPositiveInteger(name: string, fallback: number): number {
 async function runIdempotentJson(
   req: express.Request,
   res: express.Response,
-  store: IdempotencyStore,
+  stores: { primary: IdempotencyStore; fallback?: IdempotencyStore | undefined },
   endpoint: string,
   identityScope: string,
   execute: () => Promise<{ status: number; body: unknown }>,
@@ -401,7 +429,9 @@ async function runIdempotentJson(
 
   const requestFingerprint = fingerprintPayload(req.body);
   const scope = `${endpoint}:${identityScope}`;
-  const lookup = await store.lookup(scope, idempotencyKey, requestFingerprint);
+  const selected = await selectIdempotencyStore(stores, scope, idempotencyKey, requestFingerprint);
+  const lookup = selected.lookup;
+  res.setHeader('X-Idempotency-Backend', selected.backend);
 
   if (lookup.kind === 'hit') {
     onAudit({ outcome: 'replayed' });
@@ -419,7 +449,7 @@ async function runIdempotentJson(
 
   try {
     const result = await execute();
-    await store.save(scope, idempotencyKey, requestFingerprint, {
+    await selected.store.save(scope, idempotencyKey, requestFingerprint, {
       status: result.status,
       body: result.body,
       createdAtMs: Date.now()
@@ -428,9 +458,37 @@ async function runIdempotentJson(
     res.setHeader('X-Idempotency-Status', 'created');
     res.status(result.status).json(result.body);
   } catch (error) {
-    await store.discard(scope, idempotencyKey);
+    await selected.store.discard(scope, idempotencyKey);
     onAudit({ outcome: 'failure', detail: asMessage(error) });
     res.status(400).json({ message: asMessage(error) });
+  }
+}
+
+async function selectIdempotencyStore(
+  stores: { primary: IdempotencyStore; fallback?: IdempotencyStore | undefined },
+  scope: string,
+  key: string,
+  requestFingerprint: string
+): Promise<{
+  store: IdempotencyStore;
+  backend: 'primary' | 'fallback';
+  lookup: Awaited<ReturnType<IdempotencyStore['lookup']>>;
+}> {
+  try {
+    return {
+      store: stores.primary,
+      backend: 'primary',
+      lookup: await stores.primary.lookup(scope, key, requestFingerprint)
+    };
+  } catch {
+    if (!stores.fallback) {
+      throw new Error('Idempotency backend unavailable.');
+    }
+    return {
+      store: stores.fallback,
+      backend: 'fallback',
+      lookup: await stores.fallback.lookup(scope, key, requestFingerprint)
+    };
   }
 }
 

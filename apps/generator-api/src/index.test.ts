@@ -52,6 +52,38 @@ test('GET /readyz returns 503 when configured redis dependency check fails', asy
   assert.equal(response.body.checks.redis, 'failed');
 });
 
+test('POST /generate falls back to local stores when redis backend fails', async () => {
+  const failingRedis: RedisExecutor = {
+    async run() {
+      throw new Error('redis unavailable');
+    }
+  };
+  const resilientApp = createApp({ redisExecutor: failingRedis });
+  const token = await authHeader();
+
+  const first = await supertest(resilientApp)
+    .post('/generate')
+    .set('authorization', token)
+    .set('x-tenant-id', 'tenant-resilience')
+    .set('idempotency-key', 'resilient-001')
+    .send(intake);
+
+  assert.equal(first.status, 200);
+  assert.equal(first.headers['x-ratelimit-backend'], 'fallback');
+  assert.equal(first.headers['x-idempotency-backend'], 'fallback');
+
+  const second = await supertest(resilientApp)
+    .post('/generate')
+    .set('authorization', token)
+    .set('x-tenant-id', 'tenant-resilience')
+    .set('idempotency-key', 'resilient-001')
+    .send(intake);
+
+  assert.equal(second.status, 200);
+  assert.equal(second.headers['x-idempotency-status'], 'replayed');
+  assert.equal(second.headers['x-idempotency-backend'], 'fallback');
+});
+
 test('createApp fails fast when tenant quota config file is invalid', () => {
   const dir = mkdtempSync(join(tmpdir(), 'pgw-invalid-quota-'));
   const configPath = join(dir, 'tenant-quotas.json');
