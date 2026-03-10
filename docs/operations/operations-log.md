@@ -234,3 +234,13 @@
   - `.github/workflows/ci.yml`
   - `.github/workflows/generator-contract-gate.yml`
   - `.github/workflows/governance-quarterly-self-test.yml`
+
+## Enterprise Ticket - PR Compliance Automation
+- Added PR compliance policy `config/pr-compliance-policy.json`.
+- Added validator `tools/validate-pr-compliance.mjs` and tests `tools/validate-pr-compliance.test.mjs`.
+- Added deterministic sample event fixture `fixtures/governance/pr-event.sample.json`.
+- Added workflow `.github/workflows/pr-compliance.yml` to enforce required labels/checklist on PR events.
+- Enforced policy checks in:
+  - `npm run release:check`
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/generator-contract-gate.yml`

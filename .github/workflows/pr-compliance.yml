@@ -1,0 +1,27 @@
+name: pr-compliance
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, labeled, unlabeled, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  pr-compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Validate PR compliance policy
+        run: node tools/validate-pr-compliance.mjs --policy config/pr-compliance-policy.json --event "$GITHUB_EVENT_PATH"

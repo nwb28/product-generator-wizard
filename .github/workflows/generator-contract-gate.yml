@@ -57,6 +57,9 @@ jobs:
       - name: Verify audit schema compatibility
         run: npm run audit:schema:check
 
+      - name: Verify PR compliance policy
+        run: npm run pr:compliance:check
+
       - name: Verify RBAC policy
         run: npm run rbac:check
 

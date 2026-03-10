@@ -38,7 +38,8 @@
     "openapi:compat:check": "node tools/check-openapi-compat.mjs --openapi docs/api/openapi.yaml --policy config/openapi-compat-policy.json",
     "secrets:rotation:check": "node tools/validate-secret-rotation-evidence.mjs --policy config/secret-rotation-policy.json --evidence docs/governance/secret-rotation-evidence.json",
     "rbac:check": "node tools/validate-rbac-policy.mjs --policy config/rbac-policy.json --intake fixtures/golden/pilot-intake.json && node tools/validate-rbac-policy.mjs --policy config/rbac-policy.json --intake fixtures/preview/pilot-built-product-intake.json",
-    "audit:schema:check": "node tools/validate-audit-event-schema.mjs --policy config/audit-event-policy.json --events fixtures/audit/events.sample.json"
+    "audit:schema:check": "node tools/validate-audit-event-schema.mjs --policy config/audit-event-policy.json --events fixtures/audit/events.sample.json",
+    "pr:compliance:check": "node tools/validate-pr-compliance.mjs --policy config/pr-compliance-policy.json --event fixtures/governance/pr-event.sample.json"
   },
   "engines": {
     "node": ">=20"
