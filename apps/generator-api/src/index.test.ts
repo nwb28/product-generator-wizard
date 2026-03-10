@@ -234,6 +234,7 @@ test('POST /preview/validate returns 200 for valid built-product payload', async
   const response = await supertest(app)
     .post('/preview/validate')
     .set('authorization', await authHeader())
+    .set('x-tenant-id', 'tenant-preview')
     .send(builtProductPayload);
 
   assert.equal(response.status, 200);
@@ -250,6 +251,7 @@ test('POST /preview/simulate returns transformed preview session output', async 
   const response = await supertest(app)
     .post('/preview/simulate')
     .set('authorization', await authHeader())
+    .set('x-tenant-id', 'tenant-preview')
     .send(builtProductPayload);
 
   assert.equal(response.status, 200);
@@ -258,12 +260,14 @@ test('POST /preview/simulate returns transformed preview session output', async 
   assert.deepEqual(response.body.output.previewSession.excelSimulation.capabilities, ['export', 'refresh']);
   assert.equal(typeof response.body.artifacts.deterministicHash, 'string');
   assert.ok(Array.isArray(response.body.artifacts.files));
+  assert.equal(response.body.artifactPolicy.retentionHours, 24);
 });
 
 test('POST /preview/report returns no-go when built-product payload is invalid', async () => {
   const response = await supertest(app)
     .post('/preview/report')
     .set('authorization', await authHeader())
+    .set('x-tenant-id', 'tenant-preview')
     .send({
       ...builtProductPayload,
       mappings: []
@@ -278,6 +282,7 @@ test('POST /preview/report returns permission matrix coverage for valid payload'
   const response = await supertest(app)
     .post('/preview/report')
     .set('authorization', await authHeader())
+    .set('x-tenant-id', 'tenant-preview')
     .send(builtProductPayload);
 
   assert.equal(response.status, 200);
@@ -286,6 +291,17 @@ test('POST /preview/report returns permission matrix coverage for valid payload'
   assert.equal(response.body.permissionMatrix.company.permissions, 3);
   assert.equal(response.body.mappingCoverage.coveragePercent, 100);
   assert.equal(response.body.mappingCoverage.uniqueCanonicalModels, 1);
+});
+
+test('POST /preview/report returns 403 when request tenant and payload tenant do not match', async () => {
+  const response = await supertest(app)
+    .post('/preview/report')
+    .set('authorization', await authHeader())
+    .set('x-tenant-id', 'tenant-other')
+    .send(builtProductPayload);
+
+  assert.equal(response.status, 403);
+  assert.match(response.body.message, /Tenant mismatch/);
 });
 
 test('POST /generate returns 429 when tenant-principal key exceeds limit', async () => {

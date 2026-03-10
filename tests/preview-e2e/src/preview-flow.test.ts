@@ -37,16 +37,28 @@ async function bearer(): Promise<string> {
 test('preview e2e: validate -> simulate -> report', async () => {
   const auth = await bearer();
 
-  const validate = await supertest(app).post('/preview/validate').set('authorization', auth).send(builtProductPayload);
+  const validate = await supertest(app)
+    .post('/preview/validate')
+    .set('authorization', auth)
+    .set('x-tenant-id', 'tenant-preview')
+    .send(builtProductPayload);
   assert.equal(validate.status, 200);
   assert.equal(validate.body.valid, true);
 
-  const simulate = await supertest(app).post('/preview/simulate').set('authorization', auth).send(builtProductPayload);
+  const simulate = await supertest(app)
+    .post('/preview/simulate')
+    .set('authorization', auth)
+    .set('x-tenant-id', 'tenant-preview')
+    .send(builtProductPayload);
   assert.equal(simulate.status, 200);
   assert.equal(typeof simulate.body.artifacts.deterministicHash, 'string');
   assert.ok(Array.isArray(simulate.body.artifacts.files));
 
-  const report = await supertest(app).post('/preview/report').set('authorization', auth).send(builtProductPayload);
+  const report = await supertest(app)
+    .post('/preview/report')
+    .set('authorization', auth)
+    .set('x-tenant-id', 'tenant-preview')
+    .send(builtProductPayload);
   assert.equal(report.status, 200);
   assert.equal(report.body.recommendation, 'Go');
   assert.equal(report.body.permissionMatrix.company.roles, 1);
@@ -57,6 +69,7 @@ test('preview e2e: report returns no-go with invalid permissions', async () => {
   const report = await supertest(app)
     .post('/preview/report')
     .set('authorization', auth)
+    .set('x-tenant-id', 'tenant-preview')
     .send({
       ...builtProductPayload,
       permissions: {

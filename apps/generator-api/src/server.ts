@@ -453,6 +453,19 @@ export function createApp(options: AppOptions = {}) {
       res.status(403).json({ message: 'Forbidden' });
       return;
     }
+    if (!tenantMatchesPayload(req, tenantId)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/preview/validate',
+        action: 'preview-validate',
+        outcome: 'deny',
+        principalSub: principal.sub,
+        detail: 'Tenant header does not match preview payload tenant.'
+      });
+      res.status(403).json({ message: 'Tenant mismatch between request context and payload.' });
+      return;
+    }
 
     const validation = validateBuiltProductIntake(req.body as any);
     emitAudit(auditLogger, {
@@ -492,6 +505,19 @@ export function createApp(options: AppOptions = {}) {
         principalSub: principal?.sub
       });
       res.status(403).json({ message: 'Forbidden' });
+      return;
+    }
+    if (!tenantMatchesPayload(req, tenantId)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/preview/simulate',
+        action: 'preview-simulate',
+        outcome: 'deny',
+        principalSub: principal.sub,
+        detail: 'Tenant header does not match preview payload tenant.'
+      });
+      res.status(403).json({ message: 'Tenant mismatch between request context and payload.' });
       return;
     }
 
@@ -550,10 +576,14 @@ export function createApp(options: AppOptions = {}) {
       principalSub: principal.sub
     });
     const artifacts = generateDeterministicPreviewArtifacts(output.previewSession);
+    const previewRetentionHours = readEnvPositiveInteger('WIZARD_PREVIEW_ARTIFACT_RETENTION_HOURS', 24);
     res.status(200).json({
       validation,
       output,
-      artifacts
+      artifacts,
+      artifactPolicy: {
+        retentionHours: previewRetentionHours
+      }
     });
   });
 
@@ -583,6 +613,19 @@ export function createApp(options: AppOptions = {}) {
         principalSub: principal?.sub
       });
       res.status(403).json({ message: 'Forbidden' });
+      return;
+    }
+    if (!tenantMatchesPayload(req, tenantId)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/preview/report',
+        action: 'preview-report',
+        outcome: 'deny',
+        principalSub: principal.sub,
+        detail: 'Tenant header does not match preview payload tenant.'
+      });
+      res.status(403).json({ message: 'Tenant mismatch between request context and payload.' });
       return;
     }
 
@@ -679,6 +722,15 @@ function resolveRequestIdentity(req: express.Request, subject?: string): string 
 
 function resolveTenantId(req: express.Request): string {
   return req.header('x-tenant-id') ?? req.header('x-tenant') ?? req.query.tenant?.toString() ?? 'unknown-tenant';
+}
+
+function tenantMatchesPayload(req: express.Request, requestTenantId: string): boolean {
+  const body = req.body as { tenant?: { id?: string } } | null;
+  const payloadTenantId = body?.tenant?.id;
+  if (!payloadTenantId) {
+    return true;
+  }
+  return payloadTenantId === requestTenantId;
 }
 
 function applyRateLimit(res: express.Response, result: RateLimitCheckResult, backend: 'primary' | 'fallback'): boolean {
