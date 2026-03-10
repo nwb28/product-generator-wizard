@@ -1,0 +1,41 @@
+name: tenant-quota-governance
+
+on:
+  pull_request:
+    paths:
+      - config/tenant-quotas.json
+      - docs/tenant-quotas.md
+      - tools/tenant-quota-review.mjs
+
+permissions:
+  contents: read
+
+jobs:
+  quota-governance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build API workspace
+        run: npm run build --workspace @pgw/apps-generator-api
+
+      - name: Validate and summarize tenant quotas
+        run: node tools/tenant-quota-review.mjs config/tenant-quotas.json
+
+      - name: Upload quota review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tenant-quota-review-${{ github.run_number }}
+          path: .tmp/quota/review.json
+          retention-days: 30
+          if-no-files-found: error
