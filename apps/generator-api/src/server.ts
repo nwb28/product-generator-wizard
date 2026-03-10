@@ -23,11 +23,35 @@ type AppOptions = {
   telemetry?: TelemetryClient;
   redisExecutor?: RedisExecutor | null;
   redisFallbackMode?: 'fail-open' | 'fail-closed';
+  jsonBodyLimitBytes?: number;
 };
 
 export function createApp(options: AppOptions = {}) {
   const app = express();
-  app.use(express.json({ limit: '1mb' }));
+  app.disable('x-powered-by');
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+    if (process.env.NODE_ENV === 'production') {
+      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+    next();
+  });
+  app.use((req, res, next) => {
+    if (req.method !== 'POST') {
+      next();
+      return;
+    }
+    if (!req.is('application/json')) {
+      res.status(415).json({ message: 'Content-Type must be application/json.' });
+      return;
+    }
+    next();
+  });
+  const jsonBodyLimitBytes = options.jsonBodyLimitBytes ?? readEnvPositiveInteger('WIZARD_JSON_BODY_LIMIT_BYTES', 1_048_576);
+  app.use(express.json({ limit: `${jsonBodyLimitBytes}b` }));
   const auditLogger = options.auditLogger ?? createAuditLogger();
   const telemetry = options.telemetry ?? createTelemetryClient();
   const redisExecutor = options.redisExecutor === undefined ? createRedisExecutorFromEnv() : options.redisExecutor;
@@ -389,6 +413,25 @@ export function createApp(options: AppOptions = {}) {
     } catch (error) {
       handleBackendUnavailable(res, error);
     }
+  });
+
+  app.use((error: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (!error || typeof error !== 'object') {
+      next(error);
+      return;
+    }
+
+    const parseError = error as { type?: string; status?: number };
+    if (parseError.type === 'entity.parse.failed') {
+      res.status(400).json({ message: 'Invalid JSON payload.' });
+      return;
+    }
+    if (parseError.type === 'entity.too.large' || parseError.status === 413) {
+      res.status(413).json({ message: 'Payload exceeds maximum allowed size.' });
+      return;
+    }
+
+    next(error);
   });
 
   return app;

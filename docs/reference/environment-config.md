@@ -18,6 +18,7 @@ Behavior:
 - `NODE_ENV` (`development`, `test`, `staging`, `production`)
 - `WIZARD_RATE_LIMIT_MAX_PER_MINUTE` (optional, positive integer)
 - `WIZARD_IDEMPOTENCY_TTL_MS` (optional, positive integer)
+- `WIZARD_JSON_BODY_LIMIT_BYTES` (optional, max accepted request body size in bytes; default `1048576`)
 
 ### Distributed Store (Recommended for multi-instance deployments)
 - `WIZARD_REDIS_URL` (Redis connection URL, enables distributed rate limit and idempotency stores)
@@ -51,6 +52,14 @@ npm test
 - Run `npm run config:check` in deployment pipelines before releasing.
 - Set `WIZARD_AUDIT_HMAC_SECRET` for tamper-evident signed audit records.
 - Configure Redis resilience values and verify fallback behavior in synthetic/release checks.
+- Set `WIZARD_JSON_BODY_LIMIT_BYTES` to a strict value aligned to intake schema size expectations.
+
+## API Hardening Defaults
+- `X-Powered-By` header is disabled.
+- Response headers include `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and a restrictive `Content-Security-Policy`.
+- POST endpoints require `Content-Type: application/json`.
+- Malformed JSON returns `400` with JSON error body.
+- Payloads above configured limit return `413` with JSON error body.
 
 ## Secret Sources
 Recommended secret flow:

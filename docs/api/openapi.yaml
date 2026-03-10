@@ -23,6 +23,10 @@ paths:
           description: Intake valid
         '400':
           description: Intake invalid
+        '413':
+          description: Payload exceeds maximum allowed size
+        '415':
+          description: Unsupported content type
         '429':
           description: Rate limited
   /compile:
@@ -35,6 +39,10 @@ paths:
           description: Compile failure
         '403':
           description: Not authorized
+        '413':
+          description: Payload exceeds maximum allowed size
+        '415':
+          description: Unsupported content type
         '429':
           description: Rate limited
   /generate:
@@ -55,6 +63,10 @@ paths:
           description: Not authorized
         '409':
           description: Idempotency conflict or in-flight operation
+        '413':
+          description: Payload exceeds maximum allowed size
+        '415':
+          description: Unsupported content type
         '429':
           description: Rate limited
   /review-document:
@@ -75,5 +87,9 @@ paths:
           description: Not authorized
         '409':
           description: Idempotency conflict or in-flight operation
+        '413':
+          description: Payload exceeds maximum allowed size
+        '415':
+          description: Unsupported content type
         '429':
           description: Rate limited

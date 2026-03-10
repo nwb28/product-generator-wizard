@@ -31,6 +31,15 @@ test('GET /healthz returns process liveness', async () => {
   assert.equal(response.body.status, 'ok');
 });
 
+test('GET /healthz returns security hardening headers', async () => {
+  const response = await supertest(app).get('/healthz');
+  assert.equal(response.status, 200);
+  assert.equal(response.headers['x-content-type-options'], 'nosniff');
+  assert.equal(response.headers['x-frame-options'], 'DENY');
+  assert.equal(response.headers['referrer-policy'], 'no-referrer');
+  assert.equal(response.headers['content-security-policy'], "default-src 'none'; frame-ancestors 'none'");
+});
+
 test('GET /readyz returns ready when redis is not configured', async () => {
   const response = await supertest(app).get('/readyz');
   assert.equal(response.status, 200);
@@ -160,6 +169,33 @@ test('POST /generate returns deterministic hash and files', async () => {
 test('POST /generate returns 403 without authorization token', async () => {
   const response = await supertest(app).post('/generate').send(intake);
   assert.equal(response.status, 403);
+});
+
+test('POST endpoints require application/json content type', async () => {
+  const response = await supertest(app).post('/validate').set('content-type', 'text/plain').send('invalid');
+  assert.equal(response.status, 415);
+  assert.equal(response.body.message, 'Content-Type must be application/json.');
+});
+
+test('POST /validate returns 400 for malformed json payload', async () => {
+  const response = await supertest(app)
+    .post('/validate')
+    .set('content-type', 'application/json')
+    .send('{"product":');
+  assert.equal(response.status, 400);
+  assert.equal(response.body.message, 'Invalid JSON payload.');
+});
+
+test('POST /validate returns 413 for payloads above configured limit', async () => {
+  const smallLimitApp = createApp({ jsonBodyLimitBytes: 64 });
+  const oversizedPayload = {
+    ...intake,
+    canonicalModelMappings: [{ model: 'loan', sourcePath: 'a'.repeat(256), confidence: 0.9 }]
+  };
+
+  const response = await supertest(smallLimitApp).post('/validate').send(oversizedPayload);
+  assert.equal(response.status, 413);
+  assert.equal(response.body.message, 'Payload exceeds maximum allowed size.');
 });
 
 test('POST /review-document returns markdown', async () => {
