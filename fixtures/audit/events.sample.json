@@ -1,0 +1,32 @@
+[
+  {
+    "schemaVersion": "1.0.0",
+    "eventType": "wizard-authz",
+    "action": "wizard-entry",
+    "outcome": "allow",
+    "requestId": "req-1",
+    "endpoint": "/authz/wizard-entry",
+    "tenantId": "tenant-a",
+    "at": "2026-03-10T00:00:00.000Z",
+    "chain": {
+      "previousHash": "abc",
+      "eventHash": "def",
+      "sequence": 1
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "eventType": "wizard-operation",
+    "action": "generate",
+    "outcome": "success",
+    "requestId": "req-2",
+    "endpoint": "/generate",
+    "tenantId": "tenant-a",
+    "at": "2026-03-10T00:00:01.000Z",
+    "chain": {
+      "previousHash": "def",
+      "eventHash": "ghi",
+      "sequence": 2
+    }
+  }
+]

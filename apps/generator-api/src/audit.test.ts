@@ -37,6 +37,8 @@ test('createAuditLogger emits tamper-evident chain metadata', () => {
   const second = records[1];
   assert.ok(first);
   assert.ok(second);
+  assert.equal(first.schemaVersion, '1.0.0');
+  assert.equal(second.schemaVersion, '1.0.0');
   assert.equal(first.chain.sequence, 1);
   assert.equal(second.chain.sequence, 2);
   assert.equal(second.chain.previousHash, first.chain.eventHash);

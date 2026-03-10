@@ -4,6 +4,7 @@ import { execSync } from 'node:child_process';
 const steps = [
   'npm run build',
   'npm test',
+  'npm run audit:schema:check',
   'npm run rbac:check',
   'npm run secrets:rotation:check',
   'npm run openapi:compat:check',

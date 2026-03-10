@@ -41,6 +41,7 @@
 | REM-037 | Long-run performance threshold governance gap | Medium | Closed | Performance | Added long-run performance threshold policy and enforcement step for nightly perf trend workflow artifacts. |
 | REM-038 | Secret rotation evidence automation gap | High | Closed | Security | Added secret rotation policy/evidence validation and enforced checks in CI, release check, and governance quarterly self-test workflow. |
 | REM-039 | RBAC matrix policy drift gap | High | Closed | Security | Added RBAC policy validation against golden and preview fixtures, enforced in CI/contract/release gates. |
+| REM-040 | Audit event schema compatibility governance gap | High | Closed | Security | Added audit event schema policy/fixture validation, versioned audit records, and enforced checks in CI/contract/release/governance workflows. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.

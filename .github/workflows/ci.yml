@@ -21,6 +21,7 @@ jobs:
       - run: npm test --if-present
       - run: node tools/verify-deploy-attestation-path.mjs --workflow .github/workflows/deploy.yml
       - run: node tools/validate-workflow-retention.mjs --policy config/artifact-retention-policy.json --workflows .github/workflows
+      - run: npm run audit:schema:check
       - run: npm run rbac:check
       - run: npm run secrets:rotation:check
       - run: npm run openapi:compat:check

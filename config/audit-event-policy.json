@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "requiredFields": [
+    "schemaVersion",
+    "eventType",
+    "action",
+    "outcome",
+    "requestId",
+    "endpoint",
+    "tenantId",
+    "at",
+    "chain.previousHash",
+    "chain.eventHash",
+    "chain.sequence"
+  ],
+  "allowedEventTypes": ["wizard-authz", "wizard-operation"]
+}

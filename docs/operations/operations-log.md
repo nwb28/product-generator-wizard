@@ -223,3 +223,14 @@
   - `npm run release:check`
   - `.github/workflows/ci.yml`
   - `.github/workflows/generator-contract-gate.yml`
+
+## Enterprise Ticket - Audit Event Schema Compatibility Gate
+- Added audit event schema policy `config/audit-event-policy.json`.
+- Added audit schema fixture `fixtures/audit/events.sample.json`.
+- Added validator `tools/validate-audit-event-schema.mjs` and tests `tools/validate-audit-event-schema.test.mjs`.
+- Updated audit logger to emit explicit schema version `1.0.0`.
+- Enforced checks in:
+  - `npm run release:check`
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/generator-contract-gate.yml`
+  - `.github/workflows/governance-quarterly-self-test.yml`

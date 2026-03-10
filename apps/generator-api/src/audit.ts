@@ -3,8 +3,10 @@ import { appendFileSync } from 'node:fs';
 import { createHash, createHmac } from 'node:crypto';
 
 export type AuditOutcome = 'allow' | 'deny' | 'success' | 'failure' | 'throttled' | 'conflict' | 'replayed';
+export const AUDIT_SCHEMA_VERSION = '1.0.0';
 
 export type AuditEvent = {
+  schemaVersion?: string;
   eventType: 'wizard-authz' | 'wizard-operation';
   action: string;
   outcome: AuditOutcome;
@@ -21,6 +23,7 @@ export type AuditLogger = {
 };
 
 export type AuditSinkRecord = AuditEvent & {
+  schemaVersion: string;
   chain: {
     previousHash: string;
     eventHash: string;
@@ -44,6 +47,7 @@ export function createAuditLogger(options: AuditLoggerOptions = {}): AuditLogger
     emit(event) {
       sequence += 1;
       const eventDigest = canonicalHash({
+        schemaVersion: AUDIT_SCHEMA_VERSION,
         eventType: event.eventType,
         action: event.action,
         outcome: event.outcome,
@@ -59,6 +63,7 @@ export function createAuditLogger(options: AuditLoggerOptions = {}): AuditLogger
 
       const record: AuditSinkRecord = {
         ...event,
+        schemaVersion: AUDIT_SCHEMA_VERSION,
         chain: {
           previousHash,
           eventHash: eventDigest,
