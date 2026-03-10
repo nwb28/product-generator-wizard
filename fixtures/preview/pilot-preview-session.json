@@ -1,0 +1,21 @@
+{
+  "sessionId": "tenant-a-product-a-pilot-loan-adapter",
+  "tenantId": "tenant-a",
+  "productId": "product-a",
+  "views": [
+    {
+      "id": "summary",
+      "title": "Summary",
+      "payload": {
+        "layout": "compact"
+      }
+    },
+    {
+      "id": "details",
+      "title": "Details",
+      "payload": {
+        "layout": "full"
+      }
+    }
+  ]
+}
