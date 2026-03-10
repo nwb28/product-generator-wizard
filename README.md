@@ -24,3 +24,4 @@ npm test
 - `npm run config:check` validates production-grade secret/runtime configuration.
 - `npm run perf:baseline` runs local API load baseline and threshold checks.
 - API contract reference: `docs/api/openapi.yaml`.
+- OpenAPI validation: `npm run openapi:check`.
