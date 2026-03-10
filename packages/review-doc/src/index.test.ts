@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import intake from '@pgw/packages-contracts/dist/examples/intake.valid.v1.json' with { type: 'json' };
 import { validateIntake } from '@pgw/packages-validator/dist/index.js';
-import { generateHumanReviewDocument } from './index.js';
+import { generateHumanReviewDocument, generatePreInclusionReviewDocument } from './index.js';
 
 test('generateHumanReviewDocument returns Go with score 100 for clean intake', () => {
   const validation = validateIntake(intake);
@@ -30,4 +30,25 @@ test('readiness score deducts by warning category', () => {
   const doc = generateHumanReviewDocument(warningPayload, validation);
 
   assert.equal(doc.readinessScore, 95);
+});
+
+test('generatePreInclusionReviewDocument renders go/no-go summary template', () => {
+  const doc = generatePreInclusionReviewDocument({
+    adapter: { id: 'pilot-loan-adapter', version: '1.0.0' },
+    summary: { blocking: 0, warning: 2 },
+    readinessScore: 90,
+    recommendation: 'Go',
+    permissionMatrix: {
+      bucs: { roles: 1, permissions: 1 },
+      firm: { roles: 1, permissions: 2 },
+      company: { roles: 1, permissions: 3 }
+    },
+    mappingCoverage: { coveragePercent: 100, uniqueCanonicalModels: 2, lowConfidenceCount: 0 },
+    diagnostics: []
+  });
+
+  assert.equal(doc.recommendation, 'Go');
+  assert.equal(doc.readinessScore, 90);
+  assert.match(doc.markdown, /Pre-Inclusion Review Document/);
+  assert.match(doc.markdown, /Recommendation: Go/);
 });

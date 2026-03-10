@@ -9,7 +9,7 @@ import {
   validateBuiltProductIntake,
   validateBuiltProductWithRegistry
 } from '@pgw/packages-product-adapters/dist/index.js';
-import { generateHumanReviewDocument } from '@pgw/packages-review-doc/dist/index.js';
+import { generateHumanReviewDocument, generatePreInclusionReviewDocument } from '@pgw/packages-review-doc/dist/index.js';
 import { generatePilotScaffold } from '@pgw/packages-scaffold-templates/dist/index.js';
 import { toHumanSummary, validateIntake } from '@pgw/packages-validator/dist/index.js';
 import { authenticatePrincipal, hasWizardAccess } from './auth.js';
@@ -651,6 +651,23 @@ export function createApp(options: AppOptions = {}) {
       outcome: combinedBlocking === 0 ? 'success' : 'failure',
       principalSub: principal.sub
     });
+    const reviewDoc = generatePreInclusionReviewDocument({
+      adapter: (req.body as any).adapter ?? null,
+      summary: {
+        blocking: combinedBlocking,
+        warning: combinedWarning
+      },
+      readinessScore,
+      recommendation,
+      permissionMatrix: permissionAnalysis.coverage,
+      mappingCoverage: {
+        coveragePercent: mappingCoverage.coveragePercent,
+        uniqueCanonicalModels: mappingCoverage.uniqueCanonicalModels,
+        lowConfidenceCount: mappingCoverage.lowConfidenceCount
+      },
+      diagnostics: [...validation.diagnostics, ...permissionAnalysis.diagnostics]
+    });
+
     res.status(combinedBlocking === 0 ? 200 : 400).json({
       adapter: (req.body as any).adapter ?? null,
       summary: {
@@ -664,8 +681,9 @@ export function createApp(options: AppOptions = {}) {
         uniqueCanonicalModels: mappingCoverage.uniqueCanonicalModels,
         lowConfidenceCount: mappingCoverage.lowConfidenceCount
       },
-      readinessScore,
-      recommendation
+      readinessScore: reviewDoc.readinessScore,
+      recommendation: reviewDoc.recommendation,
+      markdown: reviewDoc.markdown
     });
   });
 

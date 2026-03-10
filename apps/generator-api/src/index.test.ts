@@ -276,6 +276,7 @@ test('POST /preview/report returns no-go when built-product payload is invalid',
   assert.equal(response.status, 400);
   assert.equal(response.body.recommendation, 'No-Go');
   assert.ok(response.body.summary.blocking > 0);
+  assert.match(response.body.markdown, /Pre-Inclusion Review Document/);
 });
 
 test('POST /preview/report returns permission matrix coverage for valid payload', async () => {
@@ -291,6 +292,7 @@ test('POST /preview/report returns permission matrix coverage for valid payload'
   assert.equal(response.body.permissionMatrix.company.permissions, 3);
   assert.equal(response.body.mappingCoverage.coveragePercent, 100);
   assert.equal(response.body.mappingCoverage.uniqueCanonicalModels, 1);
+  assert.match(response.body.markdown, /Recommendation: Go/);
 });
 
 test('POST /preview/report returns 403 when request tenant and payload tenant do not match', async () => {
