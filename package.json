@@ -16,6 +16,7 @@
     "typecheck": "npm run --workspaces typecheck",
     "release:check": "node tools/release-check.mjs",
     "openapi:check": "node tools/openapi-validate.mjs",
+    "audit:forward:dry-run": "node tools/audit-forwarder.mjs --dry-run",
     "config:check": "node tools/validate-env.mjs --target=production",
     "perf:baseline": "npm run build --workspace @pgw/packages-contracts && npm run build --workspace @pgw/apps-generator-api && node tools/perf-baseline.mjs",
     "perf:longrun": "npm run build --workspace @pgw/packages-contracts && npm run build --workspace @pgw/apps-generator-api && node tools/perf-longrun.mjs",
