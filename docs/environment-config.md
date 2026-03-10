@@ -21,6 +21,7 @@ Behavior:
 
 ### Distributed Store (Recommended for multi-instance deployments)
 - `WIZARD_REDIS_URL` (Redis connection URL, enables distributed rate limit and idempotency stores)
+- `WIZARD_TENANT_QUOTA_CONFIG_PATH` (optional, path to tenant quota config JSON; default `config/tenant-quotas.json`)
 
 ### Audit Logging Hardening
 - `WIZARD_AUDIT_HMAC_SECRET` (optional but recommended in staging/production; signs audit chain records)

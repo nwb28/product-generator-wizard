@@ -14,6 +14,7 @@ import {
 import { createRateLimiter, createRedisRateLimiter, type RateLimitCheckResult, type RateLimiter } from './rate-limit.js';
 import { createRedisExecutorFromEnv, type RedisExecutor } from './redis-executor.js';
 import { createTelemetryClient, type TelemetryClient, type TelemetrySpan } from './telemetry.js';
+import { createTenantQuotaPolicy, loadTenantQuotaConfigFromFile } from './tenant-quotas.js';
 
 type AppOptions = {
   rateLimiter?: RateLimiter;
@@ -33,12 +34,29 @@ export function createApp(options: AppOptions = {}) {
     'WIZARD_RATE_LIMIT_MAX_PER_MINUTE',
     process.env.NODE_ENV === 'test' ? 10_000 : 120
   );
+  const tenantQuotaPath = process.env.WIZARD_TENANT_QUOTA_CONFIG_PATH ?? 'config/tenant-quotas.json';
+  const tenantQuotaConfig = loadTenantQuotaConfigFromFile(tenantQuotaPath);
+  const tenantQuotaPolicy = createTenantQuotaPolicy(tenantQuotaConfig, maxRatePerMinute);
   const idempotencyTtlMs = readEnvPositiveInteger('WIZARD_IDEMPOTENCY_TTL_MS', 86_400_000);
-  const rateLimiter =
-    options.rateLimiter ??
-    (redisExecutor
-      ? createRedisRateLimiter({ executor: redisExecutor, maxRequests: maxRatePerMinute, windowMs: 60_000 })
-      : createRateLimiter({ maxRequests: maxRatePerMinute, windowMs: 60_000 }));
+  const limiterByPerMinute = new Map<number, RateLimiter>();
+  const rateLimiterFactory = (perMinute: number): RateLimiter => {
+    if (options.rateLimiter) {
+      return options.rateLimiter;
+    }
+    if (redisExecutor) {
+      return createRedisRateLimiter({ executor: redisExecutor, maxRequests: perMinute, windowMs: 60_000 });
+    }
+    return createRateLimiter({ maxRequests: perMinute, windowMs: 60_000 });
+  };
+  const resolveRateLimiter = (perMinute: number): RateLimiter => {
+    const existing = limiterByPerMinute.get(perMinute);
+    if (existing) {
+      return existing;
+    }
+    const next = rateLimiterFactory(perMinute);
+    limiterByPerMinute.set(perMinute, next);
+    return next;
+  };
   const idempotencyStore =
     options.idempotencyStore ??
     (redisExecutor
@@ -65,8 +83,11 @@ export function createApp(options: AppOptions = {}) {
     const principal = await authenticatePrincipal(req);
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
-
-    const rateLimit = await rateLimiter.check('authz:wizard-entry', resolveRequestIdentity(req, principal?.sub));
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'authz:wizard-entry');
+    const rateLimit = await resolveRateLimiter(rateLimitPerMinute).check(
+      'authz:wizard-entry',
+      resolveRequestIdentity(req, principal?.sub)
+    );
     if (!applyRateLimit(res, rateLimit)) {
       emitAudit(auditLogger, {
         requestId,
@@ -104,7 +125,9 @@ export function createApp(options: AppOptions = {}) {
   });
 
   app.post('/validate', async (req, res) => {
-    const rateLimit = await rateLimiter.check('validate', resolveRequestIdentity(req));
+    const tenantId = resolveTenantId(req);
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'validate');
+    const rateLimit = await resolveRateLimiter(rateLimitPerMinute).check('validate', resolveRequestIdentity(req));
     if (!applyRateLimit(res, rateLimit)) {
       return;
     }
@@ -122,7 +145,8 @@ export function createApp(options: AppOptions = {}) {
     const principal = await authenticatePrincipal(req);
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
-    const rateLimit = await rateLimiter.check('compile', resolveRequestIdentity(req, principal?.sub));
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'compile');
+    const rateLimit = await resolveRateLimiter(rateLimitPerMinute).check('compile', resolveRequestIdentity(req, principal?.sub));
     if (!applyRateLimit(res, rateLimit)) {
       emitAudit(auditLogger, {
         requestId,
@@ -177,7 +201,8 @@ export function createApp(options: AppOptions = {}) {
     const principal = await authenticatePrincipal(req);
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
-    const rateLimit = await rateLimiter.check('generate', resolveRequestIdentity(req, principal?.sub));
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'generate');
+    const rateLimit = await resolveRateLimiter(rateLimitPerMinute).check('generate', resolveRequestIdentity(req, principal?.sub));
     if (!applyRateLimit(res, rateLimit)) {
       emitAudit(auditLogger, {
         requestId,
@@ -232,7 +257,11 @@ export function createApp(options: AppOptions = {}) {
     const principal = await authenticatePrincipal(req);
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
-    const rateLimit = await rateLimiter.check('review-document', resolveRequestIdentity(req, principal?.sub));
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'review-document');
+    const rateLimit = await resolveRateLimiter(rateLimitPerMinute).check(
+      'review-document',
+      resolveRequestIdentity(req, principal?.sub)
+    );
     if (!applyRateLimit(res, rateLimit)) {
       emitAudit(auditLogger, {
         requestId,
