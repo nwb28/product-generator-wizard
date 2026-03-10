@@ -31,6 +31,7 @@ This command:
 2. Copies output to backup and restore locations.
 3. Verifies tree hash parity between source and restored output.
 4. Verifies required restored files exist.
+5. Generates preview evidence bundle inputs, backs them up, restores them, and verifies hash parity.
 
 Drill report command:
 
@@ -40,6 +41,11 @@ npm run dr:report
 
 Scheduled drill workflow:
 - `.github/workflows/dr-drill.yml`
+
+Preview DR artifacts included in drill evidence:
+- `.tmp/dr/preview-check.json`
+- `.tmp/dr/preview-restore/release-evidence.json`
+- `.tmp/dr/preview-restore/release-evidence.md`
 
 ## Incident Procedure
 1. Freeze release promotion while recovery is in progress.

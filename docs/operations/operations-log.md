@@ -105,3 +105,8 @@
 ## Enterprise Ticket - SOC2 Control Matrix
 - Added governance reference: `docs/governance/soc2-control-matrix.md`.
 - Mapped control objectives to enforcing workflows, scripts, and evidence artifacts.
+
+## Enterprise Ticket - DR Drill Preview Evidence Coverage
+- Extended `tools/dr-check.mjs` to include preview evidence backup/restore verification.
+- Extended `tools/dr-drill-report.mjs` to include preview evidence pass/fail status in drill report.
+- Updated `.github/workflows/dr-drill.yml` artifact upload paths for preview DR outputs.

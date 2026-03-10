@@ -37,5 +37,8 @@ jobs:
           path: |
             .tmp/dr/drill-report.json
             .tmp/dr/restore/metadata/generation.json
+            .tmp/dr/preview-check.json
+            .tmp/dr/preview-restore/release-evidence.json
+            .tmp/dr/preview-restore/release-evidence.md
           retention-days: 30
           if-no-files-found: error
