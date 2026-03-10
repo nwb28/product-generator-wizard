@@ -22,6 +22,7 @@ type AppOptions = {
   auditLogger?: AuditLogger;
   telemetry?: TelemetryClient;
   redisExecutor?: RedisExecutor | null;
+  redisFallbackMode?: 'fail-open' | 'fail-closed';
 };
 
 export function createApp(options: AppOptions = {}) {
@@ -30,6 +31,8 @@ export function createApp(options: AppOptions = {}) {
   const auditLogger = options.auditLogger ?? createAuditLogger();
   const telemetry = options.telemetry ?? createTelemetryClient();
   const redisExecutor = options.redisExecutor === undefined ? createRedisExecutorFromEnv() : options.redisExecutor;
+  const redisFallbackMode = resolveRedisFallbackMode(options.redisFallbackMode ?? process.env.WIZARD_REDIS_FALLBACK_MODE);
+  const allowRedisFallback = redisFallbackMode === 'fail-open';
   const maxRatePerMinute = readEnvPositiveInteger(
     'WIZARD_RATE_LIMIT_MAX_PER_MINUTE',
     process.env.NODE_ENV === 'test' ? 10_000 : 120
@@ -122,11 +125,13 @@ export function createApp(options: AppOptions = {}) {
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
     const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'authz:wizard-entry');
-    const rateLimit = await checkRateLimit(
-      'authz:wizard-entry',
-      resolveRequestIdentity(req, principal?.sub),
-      rateLimitPerMinute
-    );
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('authz:wizard-entry', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
     if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
       emitAudit(auditLogger, {
         requestId,
@@ -166,7 +171,13 @@ export function createApp(options: AppOptions = {}) {
   app.post('/validate', async (req, res) => {
     const tenantId = resolveTenantId(req);
     const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'validate');
-    const rateLimit = await checkRateLimit('validate', resolveRequestIdentity(req), rateLimitPerMinute);
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('validate', resolveRequestIdentity(req), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
     if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
       return;
     }
@@ -185,7 +196,13 @@ export function createApp(options: AppOptions = {}) {
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
     const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'compile');
-    const rateLimit = await checkRateLimit('compile', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('compile', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
     if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
       emitAudit(auditLogger, {
         requestId,
@@ -241,7 +258,13 @@ export function createApp(options: AppOptions = {}) {
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
     const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'generate');
-    const rateLimit = await checkRateLimit('generate', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('generate', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
     if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
       emitAudit(auditLogger, {
         requestId,
@@ -267,29 +290,36 @@ export function createApp(options: AppOptions = {}) {
       return;
     }
 
-    await runIdempotentJson(
-      req,
-      res,
-      { primary: idempotencyStore, fallback: distributedIdempotencyEnabled ? fallbackIdempotencyStore : undefined },
-      'generate',
-      resolveRequestIdentity(req, principal.sub),
-      async () => {
-        const manifest = compileManifest(req.body as any);
-        const output = generatePilotScaffold(manifest);
-        return { status: 200, body: output };
-      },
-      ({ outcome, detail }) => {
-        emitAudit(auditLogger, {
-          requestId,
-          tenantId,
-          endpoint: '/generate',
-          action: 'generate',
-          outcome,
-          principalSub: principal.sub,
-          detail
-        });
-      }
-    );
+    try {
+      await runIdempotentJson(
+        req,
+        res,
+        {
+          primary: idempotencyStore,
+          fallback: distributedIdempotencyEnabled && allowRedisFallback ? fallbackIdempotencyStore : undefined
+        },
+        'generate',
+        resolveRequestIdentity(req, principal.sub),
+        async () => {
+          const manifest = compileManifest(req.body as any);
+          const output = generatePilotScaffold(manifest);
+          return { status: 200, body: output };
+        },
+        ({ outcome, detail }) => {
+          emitAudit(auditLogger, {
+            requestId,
+            tenantId,
+            endpoint: '/generate',
+            action: 'generate',
+            outcome,
+            principalSub: principal.sub,
+            detail
+          });
+        }
+      );
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+    }
   });
 
   app.post('/review-document', async (req, res) => {
@@ -297,7 +327,13 @@ export function createApp(options: AppOptions = {}) {
     const requestId = resolveRequestId(req.header('x-request-id'));
     const tenantId = resolveTenantId(req);
     const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'review-document');
-    const rateLimit = await checkRateLimit('review-document', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('review-document', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
     if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
       emitAudit(auditLogger, {
         requestId,
@@ -323,29 +359,36 @@ export function createApp(options: AppOptions = {}) {
       return;
     }
 
-    await runIdempotentJson(
-      req,
-      res,
-      { primary: idempotencyStore, fallback: distributedIdempotencyEnabled ? fallbackIdempotencyStore : undefined },
-      'review-document',
-      resolveRequestIdentity(req, principal.sub),
-      async () => {
-        const validation = validateIntake(req.body);
-        const review = generateHumanReviewDocument(req.body as any, validation);
-        return { status: 200, body: review };
-      },
-      ({ outcome, detail }) => {
-        emitAudit(auditLogger, {
-          requestId,
-          tenantId,
-          endpoint: '/review-document',
-          action: 'review-document',
-          outcome,
-          principalSub: principal.sub,
-          detail
-        });
-      }
-    );
+    try {
+      await runIdempotentJson(
+        req,
+        res,
+        {
+          primary: idempotencyStore,
+          fallback: distributedIdempotencyEnabled && allowRedisFallback ? fallbackIdempotencyStore : undefined
+        },
+        'review-document',
+        resolveRequestIdentity(req, principal.sub),
+        async () => {
+          const validation = validateIntake(req.body);
+          const review = generateHumanReviewDocument(req.body as any, validation);
+          return { status: 200, body: review };
+        },
+        ({ outcome, detail }) => {
+          emitAudit(auditLogger, {
+            requestId,
+            tenantId,
+            endpoint: '/review-document',
+            action: 'review-document',
+            outcome,
+            principalSub: principal.sub,
+            detail
+          });
+        }
+      );
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+    }
   });
 
   return app;
@@ -359,6 +402,9 @@ export function createApp(options: AppOptions = {}) {
     try {
       return { result: await primary.check(endpoint, identity), backend: 'primary' as const };
     } catch {
+      if (!allowRedisFallback) {
+        throw new Error('RATE_LIMIT_BACKEND_UNAVAILABLE');
+      }
       return {
         result: await resolveFallbackRateLimiter(perMinute).check(endpoint, identity),
         backend: 'fallback' as const
@@ -482,7 +528,7 @@ async function selectIdempotencyStore(
     };
   } catch {
     if (!stores.fallback) {
-      throw new Error('Idempotency backend unavailable.');
+      throw new Error('IDEMPOTENCY_BACKEND_UNAVAILABLE');
     }
     return {
       store: stores.fallback,
@@ -490,6 +536,22 @@ async function selectIdempotencyStore(
       lookup: await stores.fallback.lookup(scope, key, requestFingerprint)
     };
   }
+}
+
+function resolveRedisFallbackMode(value: string | undefined): 'fail-open' | 'fail-closed' {
+  if (value === 'fail-closed') {
+    return 'fail-closed';
+  }
+  return 'fail-open';
+}
+
+function handleBackendUnavailable(res: express.Response, error: unknown): void {
+  const message = asMessage(error);
+  if (message.includes('BACKEND_UNAVAILABLE')) {
+    res.status(503).json({ message: 'Required backend dependency unavailable.' });
+    return;
+  }
+  res.status(500).json({ message: asMessage(error) });
 }
 
 async function sendJsonResponse(

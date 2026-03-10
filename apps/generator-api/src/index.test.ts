@@ -84,6 +84,29 @@ test('POST /generate falls back to local stores when redis backend fails', async
   assert.equal(second.headers['x-idempotency-backend'], 'fallback');
 });
 
+test('POST /generate returns 503 in fail-closed mode when redis backend fails', async () => {
+  const failingRedis: RedisExecutor = {
+    async run() {
+      throw new Error('redis unavailable');
+    }
+  };
+  const strictApp = createApp({
+    redisExecutor: failingRedis,
+    redisFallbackMode: 'fail-closed'
+  });
+  const token = await authHeader();
+
+  const response = await supertest(strictApp)
+    .post('/generate')
+    .set('authorization', token)
+    .set('x-tenant-id', 'tenant-strict')
+    .set('idempotency-key', 'strict-001')
+    .send(intake);
+
+  assert.equal(response.status, 503);
+  assert.match(response.body.message, /dependency unavailable/);
+});
+
 test('createApp fails fast when tenant quota config file is invalid', () => {
   const dir = mkdtempSync(join(tmpdir(), 'pgw-invalid-quota-'));
   const configPath = join(dir, 'tenant-quotas.json');

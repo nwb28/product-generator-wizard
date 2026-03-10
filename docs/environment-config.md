@@ -25,6 +25,7 @@ Behavior:
 - `WIZARD_REDIS_TIMEOUT_MS` (optional, Redis operation timeout in milliseconds; default `250`)
 - `WIZARD_REDIS_CIRCUIT_BREAKER_THRESHOLD` (optional, consecutive failure threshold before opening circuit; default `3`)
 - `WIZARD_REDIS_CIRCUIT_BREAKER_COOLDOWN_MS` (optional, circuit cooldown duration in milliseconds; default `30000`)
+- `WIZARD_REDIS_FALLBACK_MODE` (`fail-open` default, or `fail-closed`)
 
 ### Audit Logging Hardening
 - `WIZARD_AUDIT_HMAC_SECRET` (optional but recommended in staging/production; signs audit chain records)
