@@ -1,6 +1,7 @@
 import { createClient } from 'redis';
 
 export type RedisLikeClient = {
+  ping(): Promise<string>;
   incr(key: string): Promise<number>;
   pExpire(key: string, milliseconds: number): Promise<number>;
   pTTL(key: string): Promise<number>;

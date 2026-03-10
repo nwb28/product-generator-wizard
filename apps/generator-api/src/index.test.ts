@@ -5,6 +5,7 @@ import intake from '@pgw/packages-contracts/dist/examples/intake.valid.v1.json' 
 import type { AuditEvent } from './audit.js';
 import { signTestToken } from './auth.js';
 import { createRateLimiter } from './rate-limit.js';
+import type { RedisExecutor } from './redis-executor.js';
 import type { TelemetryClient } from './telemetry.js';
 import { createApp } from './server.js';
 
@@ -19,6 +20,33 @@ test('POST /validate returns 200 for valid intake', async () => {
   const response = await supertest(app).post('/validate').send(intake);
   assert.equal(response.status, 200);
   assert.equal(response.body.valid, true);
+});
+
+test('GET /healthz returns process liveness', async () => {
+  const response = await supertest(app).get('/healthz');
+  assert.equal(response.status, 200);
+  assert.equal(response.body.status, 'ok');
+});
+
+test('GET /readyz returns ready when redis is not configured', async () => {
+  const response = await supertest(app).get('/readyz');
+  assert.equal(response.status, 200);
+  assert.equal(response.body.ready, true);
+  assert.equal(response.body.checks.redis, 'not-configured');
+});
+
+test('GET /readyz returns 503 when configured redis dependency check fails', async () => {
+  const failingRedis: RedisExecutor = {
+    async run() {
+      throw new Error('redis unavailable');
+    }
+  };
+  const dependencyApp = createApp({ redisExecutor: failingRedis });
+
+  const response = await supertest(dependencyApp).get('/readyz');
+  assert.equal(response.status, 503);
+  assert.equal(response.body.ready, false);
+  assert.equal(response.body.checks.redis, 'failed');
 });
 
 test('GET /authz/wizard-entry returns 403 without auth token', async () => {

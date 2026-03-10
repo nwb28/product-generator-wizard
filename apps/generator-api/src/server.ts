@@ -79,6 +79,31 @@ export function createApp(options: AppOptions = {}) {
     next();
   });
 
+  app.get('/healthz', (_req, res) => {
+    res.status(200).json({ status: 'ok' });
+  });
+
+  app.get('/readyz', async (_req, res) => {
+    const checks: Record<string, 'ok' | 'failed' | 'not-configured'> = {
+      api: 'ok',
+      redis: 'not-configured'
+    };
+
+    if (redisExecutor) {
+      try {
+        await redisExecutor.run(async (client) => {
+          await client.ping();
+        });
+        checks.redis = 'ok';
+      } catch {
+        checks.redis = 'failed';
+      }
+    }
+
+    const ready = Object.values(checks).every((status) => status === 'ok' || status === 'not-configured');
+    res.status(ready ? 200 : 503).json({ ready, checks });
+  });
+
   app.get('/authz/wizard-entry', async (req, res) => {
     const principal = await authenticatePrincipal(req);
     const requestId = resolveRequestId(req.header('x-request-id'));
