@@ -200,3 +200,8 @@
   - `.github/workflows/ci.yml`
   - `.github/workflows/generator-contract-gate.yml`
   - `.github/workflows/openapi-contract.yml`
+
+## Enterprise Ticket - Long-Run Performance Policy Gate
+- Added load policy `config/perf-load-policy.json` for long-run p95 thresholds.
+- Added validator `tools/validate-perf-report.mjs` and tests `tools/validate-perf-report.test.mjs`.
+- Added `npm run perf:longrun:check` and enforced it in `.github/workflows/perf-trend.yml`.

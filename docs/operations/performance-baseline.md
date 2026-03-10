@@ -48,3 +48,4 @@ Run this command in a dedicated optional performance job first. Once stable over
 Current dedicated workflow:
 - `.github/workflows/nonfunctional-reliability.yml` (scheduled weekly + manual dispatch)
 - `.github/workflows/perf-trend.yml` (nightly long-run trend profile with artifacts)
+- `.github/workflows/perf-trend.yml` also enforces `config/perf-load-policy.json` via `npm run perf:longrun:check`.

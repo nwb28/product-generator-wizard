@@ -32,6 +32,9 @@ jobs:
           PERF_TREND_BASELINE_PATH: fixtures/perf/longrun-baseline.json
           PERF_TREND_MAX_DEGRADATION_RATIO: 1.2
 
+      - name: Validate long-run perf thresholds
+        run: npm run perf:longrun:check
+
       - name: Upload perf trend artifact
         uses: actions/upload-artifact@v4
         with:
