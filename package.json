@@ -23,6 +23,7 @@
     "dr:check": "npm run build --workspace @pgw/packages-contracts && npm run build --workspace @pgw/packages-validator && npm run build --workspace @pgw/packages-compiler && npm run build --workspace @pgw/packages-scaffold-templates && npm run build --workspace @pgw/packages-review-doc && npm run build --workspace @pgw/tools-generator-cli && node tools/dr-check.mjs",
     "dr:report": "node tools/dr-drill-report.mjs",
     "synthetic:probe": "npm run build --workspace @pgw/packages-contracts && npm run build --workspace @pgw/apps-generator-api && node tools/synthetic-probe.mjs",
+    "preview:gate": "npm run build --workspace @pgw/packages-contracts && npm run build --workspace @pgw/packages-product-adapters && npm run build --workspace @pgw/apps-generator-api && node tools/preview-contract-gate.mjs fixtures/preview/pilot-built-product-intake.json",
     "quota:review": "npm run build --workspace @pgw/apps-generator-api && node tools/tenant-quota-review.mjs config/tenant-quotas.json",
     "sbom:generate": "mkdir -p .tmp && npm sbom --sbom-format cyclonedx --sbom-type application > .tmp/sbom.cdx.json",
     "smoke:api": "node tools/api-smoke.mjs",

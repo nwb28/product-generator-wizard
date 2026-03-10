@@ -20,6 +20,7 @@ Governs changes to intake and manifest contracts for Product Generator Wizard.
 - 1 approval from Backend Engineer (validator/compiler owner).
 - CI checks `bootstrap` and `contract-gate` must pass.
 - `CODEOWNERS` review enforcement applies to `packages/contracts`, compiler/validator packages, and CI workflow files.
+- `preview-contract-gate` must pass for built-product preview onboarding changes.
 
 ## Compatibility Registry
 - Active versions are tracked in `packages/contracts/src/contracts.index.json`.
