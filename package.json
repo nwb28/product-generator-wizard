@@ -39,7 +39,8 @@
     "secrets:rotation:check": "node tools/validate-secret-rotation-evidence.mjs --policy config/secret-rotation-policy.json --evidence docs/governance/secret-rotation-evidence.json",
     "rbac:check": "node tools/validate-rbac-policy.mjs --policy config/rbac-policy.json --intake fixtures/golden/pilot-intake.json && node tools/validate-rbac-policy.mjs --policy config/rbac-policy.json --intake fixtures/preview/pilot-built-product-intake.json",
     "audit:schema:check": "node tools/validate-audit-event-schema.mjs --policy config/audit-event-policy.json --events fixtures/audit/events.sample.json",
-    "pr:compliance:check": "node tools/validate-pr-compliance.mjs --policy config/pr-compliance-policy.json --event fixtures/governance/pr-event.sample.json"
+    "pr:compliance:check": "node tools/validate-pr-compliance.mjs --policy config/pr-compliance-policy.json --event fixtures/governance/pr-event.sample.json",
+    "secret:scan:check": "node tools/scan-secrets.mjs --policy config/secret-scan-policy.json"
   },
   "engines": {
     "node": ">=20"

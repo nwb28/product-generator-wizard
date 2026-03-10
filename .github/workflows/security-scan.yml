@@ -27,6 +27,9 @@ jobs:
       - name: Enforce dependency policy
         run: npm run deps:policy:check
 
+      - name: Enforce repository secret scan policy
+        run: npm run secret:scan:check
+
       - name: Run npm audit report
         run: npm audit --json > npm-audit-report.json || true
 

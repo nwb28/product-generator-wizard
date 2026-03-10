@@ -20,6 +20,7 @@ jobs:
       - run: npm run smoke:ui
       - run: npm test --if-present
       - run: npm run pr:compliance:check
+      - run: npm run secret:scan:check
       - run: node tools/verify-deploy-attestation-path.mjs --workflow .github/workflows/deploy.yml
       - run: node tools/validate-workflow-retention.mjs --policy config/artifact-retention-policy.json --workflows .github/workflows
       - run: npm run audit:schema:check

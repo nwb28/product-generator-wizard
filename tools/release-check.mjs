@@ -5,6 +5,7 @@ const steps = [
   'npm run build',
   'npm test',
   'npm run pr:compliance:check',
+  'npm run secret:scan:check',
   'npm run audit:schema:check',
   'npm run rbac:check',
   'npm run secrets:rotation:check',

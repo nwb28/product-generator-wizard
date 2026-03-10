@@ -244,3 +244,13 @@
   - `npm run release:check`
   - `.github/workflows/ci.yml`
   - `.github/workflows/generator-contract-gate.yml`
+
+## Enterprise Ticket - Repository Secret Scan Policy Gate
+- Added secret scan policy `config/secret-scan-policy.json`.
+- Added validator `tools/scan-secrets.mjs` and tests `tools/scan-secrets.test.mjs`.
+- Added root command `npm run secret:scan:check`.
+- Enforced checks in:
+  - `npm run release:check`
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/generator-contract-gate.yml`
+  - `.github/workflows/security-scan.yml`

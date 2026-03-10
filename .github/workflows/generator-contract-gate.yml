@@ -60,6 +60,9 @@ jobs:
       - name: Verify PR compliance policy
         run: npm run pr:compliance:check
 
+      - name: Verify repository secret scan policy
+        run: npm run secret:scan:check
+
       - name: Verify RBAC policy
         run: npm run rbac:check
 
