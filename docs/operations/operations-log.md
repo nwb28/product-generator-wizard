@@ -77,3 +77,10 @@
 - Added ADR document `docs/reference/adr/0001-build-artifact-strategy.md`.
 - Standardized policy to keep generated build outputs out of source control.
 - Linked ADR in documentation index for maintainer discoverability.
+
+## Enterprise Ticket - CODEOWNERS Hardening
+- Expanded `.github/CODEOWNERS` to include:
+  - preview sandbox and preview e2e surfaces
+  - product adapter and preview fixture paths
+  - operations docs and ADR references
+  - governance-critical tools for branch protection, evidence, retention, and cleanliness
