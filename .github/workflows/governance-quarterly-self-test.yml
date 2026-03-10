@@ -43,6 +43,9 @@ jobs:
         run: |
           gh api repos/${{ github.repository }}/branches/main/protection > .tmp/main-branch-protection.json
 
+      - name: Validate secret rotation evidence policy
+        run: npm run secrets:rotation:check
+
       - name: Run governance self-test
         id: self_test
         continue-on-error: true

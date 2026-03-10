@@ -38,6 +38,7 @@ Documentation is organized by domain so operational and governance assets stay d
 - `docs/governance/tenant-quota-change-workflow.md`
 - `docs/governance/vulnerability-gate-policy.md`
 - `docs/governance/remediation-tracker.md`
+- `docs/governance/secret-rotation-evidence.json`
 - `docs/governance/sbom-process.md`
 - `docs/governance/adapter-versioning-policy.md`
 - `docs/governance/pre-inclusion-policy.md`

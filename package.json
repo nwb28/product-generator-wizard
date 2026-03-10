@@ -35,7 +35,8 @@
     "layout:check": "node tools/verify-repository-layout.mjs --policy config/repository-layout-policy.json",
     "slo:check": "node tools/validate-slo-policy.mjs --policy config/slo-policy.json",
     "deps:policy:check": "node tools/enforce-dependency-policy.mjs --policy config/dependency-policy.json --lockfile package-lock.json",
-    "openapi:compat:check": "node tools/check-openapi-compat.mjs --openapi docs/api/openapi.yaml --policy config/openapi-compat-policy.json"
+    "openapi:compat:check": "node tools/check-openapi-compat.mjs --openapi docs/api/openapi.yaml --policy config/openapi-compat-policy.json",
+    "secrets:rotation:check": "node tools/validate-secret-rotation-evidence.mjs --policy config/secret-rotation-policy.json --evidence docs/governance/secret-rotation-evidence.json"
   },
   "engines": {
     "node": ">=20"

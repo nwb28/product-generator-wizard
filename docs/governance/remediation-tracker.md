@@ -39,6 +39,7 @@
 | REM-035 | Dependency policy enforcement gap | High | Closed | Security | Added dependency denylist policy validation against lockfile and enforced checks in CI, generator gate, and security scan workflows. |
 | REM-036 | API backward-compatibility regression gate gap | High | Closed | Backend | Added OpenAPI required-operation compatibility policy and enforced checks in CI, contract gate, release check, and openapi workflow. |
 | REM-037 | Long-run performance threshold governance gap | Medium | Closed | Performance | Added long-run performance threshold policy and enforcement step for nightly perf trend workflow artifacts. |
+| REM-038 | Secret rotation evidence automation gap | High | Closed | Security | Added secret rotation policy/evidence validation and enforced checks in CI, release check, and governance quarterly self-test workflow. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.

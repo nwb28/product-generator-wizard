@@ -205,3 +205,12 @@
 - Added load policy `config/perf-load-policy.json` for long-run p95 thresholds.
 - Added validator `tools/validate-perf-report.mjs` and tests `tools/validate-perf-report.test.mjs`.
 - Added `npm run perf:longrun:check` and enforced it in `.github/workflows/perf-trend.yml`.
+
+## Enterprise Ticket - Secret Rotation Evidence Gate
+- Added policy `config/secret-rotation-policy.json`.
+- Added evidence file `docs/governance/secret-rotation-evidence.json`.
+- Added validator `tools/validate-secret-rotation-evidence.mjs` and tests `tools/validate-secret-rotation-evidence.test.mjs`.
+- Enforced checks in:
+  - `npm run release:check`
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/governance-quarterly-self-test.yml`
