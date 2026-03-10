@@ -432,6 +432,43 @@ test('audit logger emits structured events for authz deny and generate replay', 
   assert.equal(replayEvent?.tenantId, 'tenant-audit');
 });
 
+test('audit logger captures preview operation success and deny events', async () => {
+  const events: AuditEvent[] = [];
+  const auditedApp = createApp({
+    auditLogger: {
+      emit(event) {
+        events.push(event);
+      }
+    }
+  });
+  const token = await authHeader();
+
+  const validate = await supertest(auditedApp)
+    .post('/preview/validate')
+    .set('authorization', token)
+    .set('x-tenant-id', 'tenant-preview')
+    .send(builtProductPayload);
+  assert.equal(validate.status, 200);
+
+  const simulate = await supertest(auditedApp)
+    .post('/preview/simulate')
+    .set('authorization', token)
+    .set('x-tenant-id', 'tenant-preview')
+    .send(builtProductPayload);
+  assert.equal(simulate.status, 200);
+
+  const deny = await supertest(auditedApp)
+    .post('/preview/report')
+    .set('authorization', token)
+    .set('x-tenant-id', 'tenant-other')
+    .send(builtProductPayload);
+  assert.equal(deny.status, 403);
+
+  assert.ok(events.some((event) => event.action === 'preview-validate' && event.outcome === 'success'));
+  assert.ok(events.some((event) => event.action === 'preview-simulate' && event.outcome === 'success'));
+  assert.ok(events.some((event) => event.action === 'preview-report' && event.outcome === 'deny'));
+});
+
 test('telemetry client captures request count and latency metrics', async () => {
   const counters: Array<{ name: string; value: number; attributes: Record<string, unknown> }> = [];
   const histograms: Array<{ name: string; value: number; attributes: Record<string, unknown> }> = [];
