@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { simulatePreview } from './api.js';
+import { normalizePreviewViews } from './preview.js';
 import { createPreviewSession, transitionPreviewSession } from './session.js';
 import type { PreviewSession, PreviewSessionStatus, TenantContext } from './types.js';
 
@@ -13,6 +15,8 @@ export function App() {
   const [adapterId, setAdapterId] = useState('pilot-loan-adapter');
   const [adapterVersion, setAdapterVersion] = useState('1.0.0');
   const [session, setSession] = useState<PreviewSession | null>(null);
+  const [views, setViews] = useState<Array<{ id: string; title: string; payload: Record<string, unknown> }>>([]);
+  const [error, setError] = useState('');
 
   const authState = useMemo(() => {
     const hasToken = Boolean(window.localStorage.getItem('previewSandboxToken'));
@@ -28,6 +32,41 @@ export function App() {
       return;
     }
     setSession(transitionPreviewSession(session, status));
+  }
+
+  async function runSimulation() {
+    if (!session) {
+      return;
+    }
+    try {
+      setError('');
+      const response = await simulatePreview({
+        schemaVersion: '1.0.0',
+        adapter: { id: adapterId, version: adapterVersion },
+        tenant: { id: tenant.tenantId },
+        product: { id: productId, type: 'loan', displayName: productId },
+        integrations: {
+          workforce: { enabled: true, details: { profile: 'default' } },
+          excelPlugin: { enabled: true, details: { mode: 'refresh' } }
+        },
+        permissions: {
+          bucs: [{ role: 'reader', permissions: ['read'] }],
+          firm: [{ role: 'writer', permissions: ['read', 'write'] }],
+          company: [{ role: 'admin', permissions: ['read', 'write', 'approve'] }]
+        },
+        mappings: [{ canonicalModel: 'loan', sourcePath: '$.loan', confidence: 0.95 }],
+        preview: {
+          uiScreens: [
+            { id: 'summary', title: 'Summary' },
+            { id: 'details', title: 'Details' }
+          ]
+        }
+      });
+      setViews(normalizePreviewViews(response.output.previewSession.views));
+      setSession(transitionPreviewSession(session, 'simulated'));
+    } catch (simulationError) {
+      setError(simulationError instanceof Error ? simulationError.message : 'Simulation failed.');
+    }
   }
 
   return (
@@ -80,11 +119,29 @@ export function App() {
           <button type='button' onClick={() => move('simulated')}>
             Mark Simulated
           </button>
+          <button type='button' onClick={() => void runSimulation()}>
+            Run Simulation
+          </button>
           <button type='button' onClick={() => move('reported')}>
             Mark Reported
           </button>
         </section>
       ) : null}
+
+      {views.length > 0 ? (
+        <section>
+          <h2>Preview Renderer</h2>
+          <ul>
+            {views.map((view) => (
+              <li key={view.id}>
+                <strong>{view.title}</strong> ({view.id})
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {error ? <p role='alert'>{error}</p> : null}
     </main>
   );
 }
