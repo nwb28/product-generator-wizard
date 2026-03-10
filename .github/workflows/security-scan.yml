@@ -30,6 +30,9 @@ jobs:
       - name: Enforce repository secret scan policy
         run: npm run secret:scan:check
 
+      - name: Enforce SAST policy
+        run: npm run sast:check
+
       - name: Run npm audit report
         run: npm audit --json > npm-audit-report.json || true
 

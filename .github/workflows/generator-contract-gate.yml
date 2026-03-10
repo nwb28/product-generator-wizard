@@ -63,6 +63,9 @@ jobs:
       - name: Verify repository secret scan policy
         run: npm run secret:scan:check
 
+      - name: Verify SAST policy
+        run: npm run sast:check
+
       - name: Verify OPA governance policy
         run: npm run opa:check
 

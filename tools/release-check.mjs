@@ -6,6 +6,7 @@ const steps = [
   'npm test',
   'npm run pr:compliance:check',
   'npm run secret:scan:check',
+  'npm run sast:check',
   'npm run opa:check',
   'npm run audit:schema:check',
   'npm run rbac:check',

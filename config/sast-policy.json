@@ -1,0 +1,27 @@
+{
+  "scanRoots": ["apps", "packages", "tools"],
+  "excludePrefixes": ["node_modules/", ".git/", ".tmp/", "dist/", ".test-dist/"],
+  "excludeSuffixes": [".png", ".jpg", ".jpeg", ".gif", ".ico", ".pdf", ".json", ".md", ".lock"],
+  "patterns": [
+    {
+      "id": "no-eval",
+      "severity": "high",
+      "regex": "\\beval\\s*\\("
+    },
+    {
+      "id": "no-new-function",
+      "severity": "high",
+      "regex": "\\bnew\\s+Function\\s*\\("
+    }
+  ],
+  "allowlist": [
+    {
+      "file": "tools/scan-code-sast.test.mjs",
+      "patternId": "no-eval"
+    },
+    {
+      "file": "tools/scan-code-sast.test.mjs",
+      "patternId": "no-new-function"
+    }
+  ]
+}

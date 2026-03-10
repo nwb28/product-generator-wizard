@@ -263,3 +263,13 @@
   - `npm run release:check`
   - `.github/workflows/ci.yml`
   - `.github/workflows/generator-contract-gate.yml`
+
+## Enterprise Ticket - SAST Policy Gate
+- Added SAST policy config `config/sast-policy.json`.
+- Added scanner `tools/scan-code-sast.mjs` and tests `tools/scan-code-sast.test.mjs`.
+- Added root command `npm run sast:check`.
+- Enforced checks in:
+  - `npm run release:check`
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/generator-contract-gate.yml`
+  - `.github/workflows/security-scan.yml`
