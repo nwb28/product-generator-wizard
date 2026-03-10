@@ -1,0 +1,6 @@
+{
+  "longrun": {
+    "validateP95MaxMs": 750,
+    "generateP95MaxMs": 1500
+  }
+}

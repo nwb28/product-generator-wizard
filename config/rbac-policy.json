@@ -1,0 +1,8 @@
+{
+  "requiredScopes": ["bucs", "firm", "company"],
+  "requiredPermissionsByScope": {
+    "bucs": ["read"],
+    "firm": ["read"],
+    "company": ["read", "approve"]
+  }
+}

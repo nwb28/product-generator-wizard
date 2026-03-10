@@ -1,0 +1,44 @@
+name: sbom
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+  push:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'apps/**/package.json'
+      - 'packages/**/package.json'
+      - 'tools/**/package.json'
+      - '.github/workflows/sbom.yml'
+
+jobs:
+  generate-sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate CycloneDX SBOM
+        run: npm run sbom:generate
+
+      - name: Validate SBOM JSON
+        run: node -e "const fs=require('node:fs'); JSON.parse(fs.readFileSync('.tmp/sbom.cdx.json','utf8')); console.log('SBOM JSON valid');"
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: .tmp/sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 30

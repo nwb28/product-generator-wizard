@@ -1,0 +1,18 @@
+{
+  "name": "@pgw/tests-preview-e2e",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node ../../tools/run-node-tests.mjs dist"
+  },
+  "dependencies": {
+    "@pgw/apps-generator-api": "0.1.0",
+    "supertest": "^7.1.1"
+  },
+  "devDependencies": {
+    "@types/supertest": "^6.0.3",
+    "typescript": "^5.8.2"
+  }
+}

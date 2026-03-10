@@ -1,0 +1,44 @@
+name: perf-trend
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  longrun-perf:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run long-run perf trend check
+        run: npm run perf:longrun
+        env:
+          PERF_LONGRUN_SAMPLE_SIZE: 10000
+          PERF_LONGRUN_CONCURRENCY: 50
+          PERF_TREND_BASELINE_PATH: fixtures/perf/longrun-baseline.json
+          PERF_TREND_MAX_DEGRADATION_RATIO: 1.2
+
+      - name: Validate long-run perf thresholds
+        run: npm run perf:longrun:check
+
+      - name: Upload perf trend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-longrun-${{ github.run_number }}
+          path: .tmp/perf/longrun.json
+          retention-days: 30
+          if-no-files-found: error

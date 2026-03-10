@@ -1,0 +1,23 @@
+{
+  "default": {
+    "perMinute": 120,
+    "endpointOverrides": {
+      "generate": 60,
+      "review-document": 60
+    }
+  },
+  "tenants": {
+    "enterprise-tier-a": {
+      "perMinute": 300,
+      "endpointOverrides": {
+        "generate": 180
+      }
+    },
+    "enterprise-tier-b": {
+      "perMinute": 180,
+      "endpointOverrides": {
+        "generate": 120
+      }
+    }
+  }
+}

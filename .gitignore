@@ -5,3 +5,7 @@ coverage/
 .env
 .env.*
 *.log
+.tmp/
+apps/wizard-ui/.test-dist/
+
+apps/preview-sandbox/.test-dist/

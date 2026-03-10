@@ -1,0 +1,84 @@
+name: tenant-quota-governance
+
+on:
+  pull_request:
+    paths:
+      - config/tenant-quotas.json
+      - docs/governance/tenant-quotas.md
+      - tools/tenant-quota-review.mjs
+
+permissions:
+  contents: read
+
+jobs:
+  quota-governance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build API workspace
+        run: npm run build --workspace @pgw/apps-generator-api
+
+      - name: Validate and summarize tenant quotas
+        run: node tools/tenant-quota-review.mjs config/tenant-quotas.json
+
+      - name: Upload quota review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tenant-quota-review-${{ github.run_number }}
+          path: .tmp/quota/review.json
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Build quota diff markdown
+        if: github.event_name == 'pull_request'
+        run: |
+          git show origin/${{ github.base_ref }}:config/tenant-quotas.json > .tmp/quota/base-tenant-quotas.json || cp config/tenant-quotas.json .tmp/quota/base-tenant-quotas.json
+          node tools/tenant-quota-diff.mjs .tmp/quota/base-tenant-quotas.json config/tenant-quotas.json .tmp/quota/diff.md
+
+      - name: Comment quota diff on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = '.tmp/quota/diff.md';
+            const body = fs.existsSync(path)
+              ? fs.readFileSync(path, 'utf8')
+              : '## Tenant Quota Diff\n\nNo quota differences detected.';
+            const issue_number = context.issue.number;
+            const marker = '<!-- tenant-quota-diff -->';
+            const finalBody = `${marker}\n${body}`;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number
+            });
+            const existing = comments.find((c) => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: finalBody
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body: finalBody
+              });
+            }

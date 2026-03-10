@@ -1,0 +1,28 @@
+{
+  "windowDays": 30,
+  "availabilityTargetPercent": 99.9,
+  "errorBudgetPercent": 0.1,
+  "latencyTargetsMs": {
+    "/validate": 750,
+    "/preview/validate": 750,
+    "/generate": 1500,
+    "/preview/simulate": 1500
+  },
+  "fastBurn": {
+    "windowMinutes": 5,
+    "maxErrorRatePercent": 2
+  },
+  "slowBurn": {
+    "windowMinutes": 60,
+    "maxErrorRatePercent": 0.5
+  },
+  "trackedEndpoints": [
+    "/validate",
+    "/compile",
+    "/generate",
+    "/review-document",
+    "/preview/validate",
+    "/preview/simulate",
+    "/preview/report"
+  ]
+}

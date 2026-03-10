@@ -1,0 +1,50 @@
+name: branch-protection-remediation
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: Set to true to apply baseline policy
+        required: true
+        default: 'false'
+      target_branch:
+        description: Branch name to remediate
+        required: true
+        default: main
+
+permissions:
+  contents: read
+  administration: write
+
+jobs:
+  remediate-branch-protection:
+    runs-on: ubuntu-latest
+    environment: governance-remediation
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate baseline policy file
+        run: node tools/apply-branch-protection-baseline.mjs --owner "${{ github.repository_owner }}" --repo "${{ github.event.repository.name }}" --branch "${{ inputs.target_branch }}" --baseline config/branch-protection-baseline.json --dry-run
+
+      - name: Require explicit apply input
+        run: |
+          if [ "${{ inputs.apply }}" != "true" ]; then
+            echo "Refusing to apply baseline because input apply=true was not provided."
+            exit 1
+          fi
+
+      - name: Apply branch protection baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node tools/apply-branch-protection-baseline.mjs \
+            --owner "${{ github.repository_owner }}" \
+            --repo "${{ github.event.repository.name }}" \
+            --branch "${{ inputs.target_branch }}" \
+            --baseline config/branch-protection-baseline.json

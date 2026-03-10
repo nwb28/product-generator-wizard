@@ -1,0 +1,8 @@
+{
+  "deterministicHash": "a9b0c30abf9155c80e8c48882ccae82497f394020c43d5f406bb2e2df822076c",
+  "paths": [
+    "preview/metadata/session.json",
+    "preview/views/details.json",
+    "preview/views/summary.json"
+  ]
+}

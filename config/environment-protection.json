@@ -1,0 +1,11 @@
+{
+  "environment": "governance-remediation",
+  "waitTimer": 0,
+  "preventSelfReview": true,
+  "reviewers": [
+    {
+      "type": "User",
+      "login": "nwb28"
+    }
+  ]
+}

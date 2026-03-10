@@ -1,0 +1,9 @@
+{
+  "pull_request": {
+    "labels": [
+      { "name": "governance" },
+      { "name": "compliance" }
+    ],
+    "body": "- [x] release evidence\n- [x] security impact\n- [x] rollback plan"
+  }
+}

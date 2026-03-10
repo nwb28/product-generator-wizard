@@ -1,0 +1,75 @@
+name: release-evidence-bundle
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apps/generator-api/**'
+      - 'packages/product-adapters/**'
+      - 'fixtures/preview/**'
+      - 'tools/bundle-release-evidence.mjs'
+      - 'tools/preview-contract-gate.mjs'
+      - '.github/workflows/release-evidence-bundle.yml'
+      - '.github/workflows/security-scan.yml'
+      - '.github/workflows/sbom.yml'
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+jobs:
+  release-evidence-bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build required workspaces
+        run: |
+          npm run build --workspace @pgw/packages-contracts
+          npm run build --workspace @pgw/packages-product-adapters
+          npm run build --workspace @pgw/apps-generator-api
+
+      - name: Run preview contract gate
+        run: node tools/preview-contract-gate.mjs fixtures/preview/pilot-built-product-intake.json
+
+      - name: Generate SBOM
+        run: npm run sbom:generate
+
+      - name: Run npm audit report
+        run: npm audit --json > npm-audit-report.json || true
+
+      - name: Enforce vulnerability gate policy
+        run: node tools/enforce-vulnerability-gate.mjs npm-audit-report.json
+
+      - name: Build release evidence bundle
+        run: |
+          node tools/bundle-release-evidence.mjs \
+            --preview .tmp/preview-gate/report.json \
+            --sbom .tmp/sbom.cdx.json \
+            --audit npm-audit-report.json \
+            --out .tmp/release-evidence
+
+      - name: Upload release evidence artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-evidence-bundle
+          path: .tmp/release-evidence
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Attest release evidence artifact provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: .tmp/release-evidence/**

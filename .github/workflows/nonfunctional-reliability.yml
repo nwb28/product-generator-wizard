@@ -1,0 +1,41 @@
+name: nonfunctional-reliability
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 9 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  perf-and-dr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run performance baseline
+        run: npm run perf:baseline
+
+      - name: Run disaster recovery check
+        run: npm run dr:check
+
+      - name: Upload non-functional artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nonfunctional-artifacts-${{ github.run_number }}
+          path: |
+            .tmp/perf/latest.json
+            .tmp/dr
+          retention-days: 14
+          if-no-files-found: warn

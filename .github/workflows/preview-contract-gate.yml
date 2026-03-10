@@ -1,0 +1,48 @@
+name: preview-contract-gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/generator-api/**'
+      - 'apps/preview-sandbox/**'
+      - 'packages/product-adapters/**'
+      - 'fixtures/preview/**'
+      - 'tools/preview-contract-gate.mjs'
+      - '.github/workflows/preview-contract-gate.yml'
+
+jobs:
+  preview-contract-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build required workspaces
+        run: |
+          npm run build --workspace @pgw/packages-contracts
+          npm run build --workspace @pgw/packages-product-adapters
+          npm run build --workspace @pgw/apps-generator-api
+
+      - name: Run preview contract gate
+        run: node tools/preview-contract-gate.mjs fixtures/preview/pilot-built-product-intake.json
+
+      - name: Verify clean tracked tree
+        run: node tools/ensure-clean-worktree.mjs
+
+      - name: Upload preview contract artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-contract-gate-artifacts
+          path: .tmp/preview-gate
+          if-no-files-found: error
+          retention-days: 30

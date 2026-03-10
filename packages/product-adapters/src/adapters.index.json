@@ -1,0 +1,12 @@
+{
+  "activeBuiltProductIntakeSchemaVersion": "1.0.0",
+  "activePreviewSessionSchemaVersion": "1.0.0",
+  "activeCompatibilityReportSchemaVersion": "1.0.0",
+  "compatibility": {
+    "1.0.0": {
+      "builtProductIntake": ["1.0.0"],
+      "previewSession": ["1.0.0"],
+      "compatibilityReport": ["1.0.0"]
+    }
+  }
+}

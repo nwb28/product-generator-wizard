@@ -1,0 +1,33 @@
+# Generated from .github/CODEOWNERS.template via tools/render-codeowners.mjs
+# Default owner for all repository changes
+* @nwb28
+
+# Contracts and generation logic require architecture governance review
+/packages/contracts/ @nwb28
+/packages/compiler/ @nwb28
+/packages/validator/ @nwb28
+/packages/scaffold-templates/ @nwb28
+/packages/review-doc/ @nwb28
+
+# Application surfaces require domain owner review
+/apps/generator-api/ @nwb28
+/apps/wizard-ui/ @nwb28
+/apps/preview-sandbox/ @nwb28
+/tools/generator-cli/ @nwb28
+/tests/e2e/ @nwb28
+/tests/preview-e2e/ @nwb28
+
+# Adapter and integration simulation controls
+/packages/product-adapters/ @nwb28
+/fixtures/preview/ @nwb28
+
+# CI/workflow and governance controls
+/.github/workflows/ @nwb28
+/docs/governance/ @nwb28
+/docs/operations/ @nwb28
+/docs/reference/adr/ @nwb28
+/tools/check-branch-protection.mjs @nwb28
+/tools/bundle-release-evidence.mjs @nwb28
+/tools/purge-preview-artifacts.mjs @nwb28
+/tools/ensure-clean-worktree.mjs @nwb28
+/config/tenant-quotas.json @nwb28

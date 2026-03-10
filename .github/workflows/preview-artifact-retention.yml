@@ -1,0 +1,39 @@
+name: preview-artifact-retention
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_root:
+        description: Root directory containing preview artifacts
+        required: false
+        default: .tmp/preview-artifacts
+      retention_days:
+        description: Retention window in days
+        required: false
+        default: '30'
+  schedule:
+    - cron: '30 7 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  purge-preview-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Purge expired preview artifacts
+        run: |
+          node tools/purge-preview-artifacts.mjs \
+            --root "${ARTIFACT_ROOT}" \
+            --retention-days "${RETENTION_DAYS}"
+        env:
+          ARTIFACT_ROOT: ${{ github.event.inputs.artifact_root || '.tmp/preview-artifacts' }}
+          RETENTION_DAYS: ${{ github.event.inputs.retention_days || '30' }}

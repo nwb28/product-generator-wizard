@@ -31,6 +31,9 @@ jobs:
       - name: Build workspace
         run: npm run build
 
+      - name: Run API readiness and contract smoke
+        run: npm run smoke:api
+
       - name: Validate intake (blocking gate)
         run: node tools/generator-cli/dist/index.js validate fixtures/golden/pilot-intake.json
 
@@ -44,6 +47,39 @@ jobs:
 
       - name: Run scaffold contract tests
         run: npm test --workspace @pgw/packages-scaffold-templates
+
+      - name: Verify clean tracked tree
+        run: node tools/ensure-clean-worktree.mjs
+
+      - name: Verify workflow retention policy conformance
+        run: node tools/validate-workflow-retention.mjs --policy config/artifact-retention-policy.json --workflows .github/workflows
+
+      - name: Verify audit schema compatibility
+        run: npm run audit:schema:check
+
+      - name: Verify PR compliance policy
+        run: npm run pr:compliance:check
+
+      - name: Verify repository secret scan policy
+        run: npm run secret:scan:check
+
+      - name: Verify RBAC policy
+        run: npm run rbac:check
+
+      - name: Verify OpenAPI compatibility policy
+        run: npm run openapi:compat:check
+
+      - name: Verify dependency policy
+        run: npm run deps:policy:check
+
+      - name: Verify SLO policy
+        run: npm run slo:check
+
+      - name: Verify repository layout policy conformance
+        run: npm run layout:check
+
+      - name: Verify workflow command references
+        run: npm run workflow:check
 
       - name: Produce diagnostics artifact
         run: |

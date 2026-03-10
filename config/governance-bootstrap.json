@@ -1,0 +1,8 @@
+{
+  "owner": "nwb28",
+  "repo": "product-generator-wizard",
+  "branch": "main",
+  "labelConfig": "config/issue-labels.json",
+  "environmentConfig": "config/environment-protection.json",
+  "branchProtectionBaseline": "config/branch-protection-baseline.json"
+}

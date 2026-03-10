@@ -6,6 +6,12 @@ export type WizardPrincipal = {
   roles: string[];
 };
 
+type AuthConfig = {
+  secret: string;
+  issuer: string;
+  audience: string;
+};
+
 const encoder = new TextEncoder();
 
 export async function authenticatePrincipal(req: express.Request): Promise<WizardPrincipal | null> {
@@ -15,13 +21,13 @@ export async function authenticatePrincipal(req: express.Request): Promise<Wizar
   }
 
   const token = authHeader.slice('Bearer '.length);
-  const secret = getAuthSecret();
+  const config = getAuthConfig();
 
   try {
-    const verified = await jwtVerify(token, encoder.encode(secret), {
+    const verified = await jwtVerify(token, encoder.encode(config.secret), {
       algorithms: ['HS256'],
-      issuer: 'product-generator-wizard',
-      audience: 'wizard-api'
+      issuer: config.issuer,
+      audience: config.audience
     });
 
     const payload = verified.payload;
@@ -54,17 +60,38 @@ export function hasWizardAccess(principal: WizardPrincipal | null): boolean {
 }
 
 export async function signTestToken(sub: string, roles: string[]): Promise<string> {
-  const secret = getAuthSecret();
+  const config = getAuthConfig();
 
   return await new SignJWT({ roles })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(sub)
-    .setIssuer('product-generator-wizard')
-    .setAudience('wizard-api')
+    .setIssuer(config.issuer)
+    .setAudience(config.audience)
     .setExpirationTime('1h')
-    .sign(encoder.encode(secret));
+    .sign(encoder.encode(config.secret));
 }
 
-function getAuthSecret(): string {
-  return process.env.WIZARD_AUTH_JWT_SECRET ?? 'local-dev-auth-secret-change-me';
+export function getAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig {
+  const nodeEnv = env.NODE_ENV ?? 'development';
+
+  const secret = env.WIZARD_AUTH_JWT_SECRET ?? 'local-dev-auth-secret-change-me';
+  const issuer = env.WIZARD_AUTH_JWT_ISSUER ?? 'product-generator-wizard';
+  const audience = env.WIZARD_AUTH_JWT_AUDIENCE ?? 'wizard-api';
+
+  const usingDefaults =
+    secret === 'local-dev-auth-secret-change-me' ||
+    issuer === 'product-generator-wizard' ||
+    audience === 'wizard-api';
+
+  if (!['development', 'test'].includes(nodeEnv) && usingDefaults) {
+    throw new Error(
+      'Auth configuration must set WIZARD_AUTH_JWT_SECRET, WIZARD_AUTH_JWT_ISSUER, and WIZARD_AUTH_JWT_AUDIENCE outside development/test.'
+    );
+  }
+
+  if (!['development', 'test'].includes(nodeEnv) && secret.length < 32) {
+    throw new Error('Auth configuration requires WIZARD_AUTH_JWT_SECRET to be at least 32 characters outside development/test.');
+  }
+
+  return { secret, issuer, audience };
 }

@@ -1,0 +1,51 @@
+# Remediation Tracker
+
+| ID | Area | Severity | Status | Owner | Notes |
+|---|---|---|---|---|---|
+| REM-001 | API auth/header policy hardening | Medium | Closed | Backend | Replaced temporary role header checks with JWT claim-based authorization middleware. |
+| REM-002 | UI production build pipeline | Medium | Closed | Frontend | Added Vite production bundling/runtime entry and retained automated UI tests. |
+| REM-003 | CI artifact retention policy | Low | Closed | DevOps | Added artifact retention windows, strict upload rules, and naming conventions in contract-gate workflow. |
+| REM-004 | Contract versioning governance docs | Low | Closed | Tech Lead | Published contract governance/versioning/approval policy. |
+| REM-005 | Preview tenant boundary enforcement | High | Closed | Backend | Added tenant-header/payload consistency checks for preview endpoints with deny-path audit events. |
+| REM-006 | Preview audit-chain coverage | Medium | Closed | Backend | Added tests for preview success/deny outcomes in tamper-evident audit logging. |
+| REM-007 | Preview gate CI | Medium | Closed | DevOps | Added `preview-contract-gate` workflow and deterministic fixture enforcement. |
+| REM-008 | Pre-inclusion docs pack | Medium | Closed | Tech Lead | Published preview runbook, pre-inclusion policy, adapter authoring, and operator guides. |
+| REM-009 | Tracked `.test-dist` artifacts | Medium | Closed | Frontend | Removed tracked `.test-dist` artifacts and enforced clean-generation policy in CI. |
+| REM-010 | Branch protection for preview gate | High | Closed | DevOps | `main` now requires `preview-contract-gate` with strict checks and review enforcement. |
+| REM-011 | Preview threat model publication | Medium | Closed | Security | Published preview threat model with tenant/isolation/retention controls and residual risk tracking. |
+| REM-012 | Release evidence bundling | Medium | Closed | DevOps | Added release evidence workflow and bundle artifact linking preview gate, SBOM, and security scan outputs. |
+| REM-013 | Branch protection policy drift | High | Closed | DevOps | Added policy-as-code branch protection validation and required additional checks on `main`. |
+| REM-014 | Release evidence provenance attestation gap | Medium | Closed | DevOps | Added GitHub artifact provenance attestation for release evidence bundle outputs. |
+| REM-015 | Preview artifact retention purge automation | Medium | Closed | DevOps | Added scheduled purge workflow and retention cleanup utility for preview artifact roots. |
+| REM-016 | Build artifact strategy ambiguity | Low | Closed | Tech Lead | Published ADR-0001 defining source-only strategy with CI-generated artifacts. |
+| REM-017 | CODEOWNERS path-level ownership gaps | Medium | Closed | Tech Lead | Expanded CODEOWNERS for preview, adapters, evidence tooling, and operations docs surfaces. |
+| REM-018 | Branch protection drift alerting gap | Medium | Closed | DevOps | Branch protection governance workflow now opens an issue on drift and fails the run. |
+| REM-019 | Deploy-time provenance verification gap | High | Closed | DevOps | Deploy workflow now downloads latest release evidence artifact and verifies attestation before deploy continuation. |
+| REM-020 | Workflow artifact retention policy drift | Medium | Closed | DevOps | Added retention policy config and CI validator enforcing workflow artifact retention-days values. |
+| REM-021 | SOC2 control traceability documentation gap | Medium | Closed | Tech Lead | Published SOC2-style control matrix mapping controls to technical enforcement and evidence. |
+| REM-022 | DR drill coverage gap for preview evidence | High | Closed | DevOps | DR check/report and drill workflow now validate preview evidence backup/restore artifacts and hashes. |
+| REM-023 | CODEOWNERS role model and mandatory owner review gap | Medium | Closed | Tech Lead | Added role-alias-based CODEOWNERS generation and enabled required code-owner review on `main`. |
+| REM-024 | Deploy attestation path regression detection gap | Medium | Closed | DevOps | Added CI verification script ensuring deploy workflow retains attestation run/download/verify steps. |
+| REM-025 | Branch protection remediation runbook automation gap | Medium | Closed | DevOps | Added approval-gated remediation workflow and reusable baseline apply script. |
+| REM-026 | Retention purge observability and stale-run alert gap | Medium | Closed | DevOps | Added scheduled retention observability workflow with stale-run issue alerting. |
+| REM-027 | Control evidence export packaging gap | Medium | Closed | DevOps | Added control-evidence export utility and scheduled artifact workflow for audit-ready bundles. |
+| REM-028 | Quarterly governance self-test automation gap | Medium | Closed | Tech Lead | Added quarterly self-test workflow and consolidated governance report artifact with alerting. |
+| REM-029 | Missing operational labels for governance workflows | Low | Closed | DevOps | Bootstrapped required repository labels (`governance`, `operations`, `retention`, `branch-protection`, `security`, `compliance`). |
+| REM-030 | Governance remediation environment approval gap | Medium | Closed | DevOps | Added environment protection policy automation and enforced required reviewer with self-review prevention for `governance-remediation`. |
+| REM-031 | Workflow command reference integrity gap | Medium | Closed | DevOps | Added workflow command reference validation and enforced checks for `tools/*.mjs` and root npm scripts in CI/release gates. |
+| REM-032 | Post-merge governance bootstrap consistency gap | Medium | Closed | DevOps | Added unified governance bootstrap orchestration command, baseline config, and runbook for dry-run/apply control initialization. |
+| REM-033 | Repository layout drift detection gap | Medium | Closed | Tech Lead | Added repository layout policy with CI/release enforcement to protect folder hygiene and prevent tracked transient artifacts at repo root. |
+| REM-034 | SLO/error-budget policy drift gap | Medium | Closed | SRE | Added SLO policy-as-code validation and enforced checks across CI/release gates. |
+| REM-035 | Dependency policy enforcement gap | High | Closed | Security | Added dependency denylist policy validation against lockfile and enforced checks in CI, generator gate, and security scan workflows. |
+| REM-036 | API backward-compatibility regression gate gap | High | Closed | Backend | Added OpenAPI required-operation compatibility policy and enforced checks in CI, contract gate, release check, and openapi workflow. |
+| REM-037 | Long-run performance threshold governance gap | Medium | Closed | Performance | Added long-run performance threshold policy and enforcement step for nightly perf trend workflow artifacts. |
+| REM-038 | Secret rotation evidence automation gap | High | Closed | Security | Added secret rotation policy/evidence validation and enforced checks in CI, release check, and governance quarterly self-test workflow. |
+| REM-039 | RBAC matrix policy drift gap | High | Closed | Security | Added RBAC policy validation against golden and preview fixtures, enforced in CI/contract/release gates. |
+| REM-040 | Audit event schema compatibility governance gap | High | Closed | Security | Added audit event schema policy/fixture validation, versioned audit records, and enforced checks in CI/contract/release/governance workflows. |
+| REM-041 | Pull request compliance checklist automation gap | Medium | Closed | DevOps | Added policy-driven PR compliance validation (workflow + deterministic fixture) enforcing required labels and checklist entries across PR, CI, and release gates. |
+| REM-042 | Repository secret pattern detection gate gap | High | Closed | Security | Added policy-driven secret pattern scanner with deterministic fixtures and enforced checks in CI/security/contract/release gates. |
+
+## Burn-Down Result
+1. Legacy MVP remediation items remain closed.
+2. Phase 7 pilot implementation risks are reduced with core controls closed.
+3. Enterprise hardening backlog items in this phase are closed; next tickets focus on continuous control maturity.

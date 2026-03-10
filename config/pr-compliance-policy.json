@@ -1,0 +1,8 @@
+{
+  "requiredLabels": ["governance", "compliance"],
+  "requiredChecklistPatterns": [
+    "release evidence",
+    "security impact",
+    "rollback plan"
+  ]
+}

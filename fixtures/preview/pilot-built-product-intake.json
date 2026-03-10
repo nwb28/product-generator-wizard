@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "adapter": { "id": "pilot-loan-adapter", "version": "1.0.0" },
+  "tenant": { "id": "preview-ci-tenant" },
+  "product": { "id": "preview-ci-product", "type": "loan", "displayName": "Preview CI Product" },
+  "integrations": {
+    "workforce": { "enabled": true, "details": { "profile": "default", "capabilities": ["submit"] } },
+    "excelPlugin": { "enabled": true, "details": { "mode": "refresh", "capabilities": ["export", "refresh"] } }
+  },
+  "permissions": {
+    "bucs": [{ "role": "reader", "permissions": ["read"] }],
+    "firm": [{ "role": "writer", "permissions": ["read", "write"] }],
+    "company": [{ "role": "admin", "permissions": ["read", "write", "approve"] }]
+  },
+  "mappings": [{ "canonicalModel": "loan", "sourcePath": "$.loan", "confidence": 0.95 }],
+  "preview": {
+    "uiScreens": [
+      { "id": "summary", "title": "Summary" },
+      { "id": "details", "title": "Details" }
+    ]
+  }
+}

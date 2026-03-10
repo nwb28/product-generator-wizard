@@ -1,0 +1,44 @@
+name: dr-drill
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 8 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  disaster-recovery-drill:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Execute DR check
+        run: npm run dr:check
+
+      - name: Produce DR drill report
+        run: npm run dr:report
+
+      - name: Upload DR drill artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dr-drill-${{ github.run_number }}
+          path: |
+            .tmp/dr/drill-report.json
+            .tmp/dr/restore/metadata/generation.json
+            .tmp/dr/preview-check.json
+            .tmp/dr/preview-restore/release-evidence.json
+            .tmp/dr/preview-restore/release-evidence.md
+          retention-days: 30
+          if-no-files-found: error

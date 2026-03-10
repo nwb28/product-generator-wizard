@@ -1,0 +1,143 @@
+openapi: 3.0.3
+info:
+  title: Product Generator Wizard API
+  version: 0.1.0
+servers:
+  - url: https://api.example.com
+paths:
+  /authz/wizard-entry:
+    get:
+      summary: Validate wizard access for current principal
+      responses:
+        '200':
+          description: Principal is authorized
+        '403':
+          description: Principal is not authorized
+        '429':
+          description: Rate limited
+  /validate:
+    post:
+      summary: Validate intake payload against contract rules
+      responses:
+        '200':
+          description: Intake valid
+        '400':
+          description: Intake invalid
+        '413':
+          description: Payload exceeds maximum allowed size
+        '415':
+          description: Unsupported content type
+        '429':
+          description: Rate limited
+  /compile:
+    post:
+      summary: Compile intake payload into manifest
+      responses:
+        '200':
+          description: Manifest generated
+        '400':
+          description: Compile failure
+        '403':
+          description: Not authorized
+        '413':
+          description: Payload exceeds maximum allowed size
+        '415':
+          description: Unsupported content type
+        '429':
+          description: Rate limited
+  /generate:
+    post:
+      summary: Generate deterministic scaffold package
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Generation success
+        '400':
+          description: Invalid payload
+        '403':
+          description: Not authorized
+        '409':
+          description: Idempotency conflict or in-flight operation
+        '413':
+          description: Payload exceeds maximum allowed size
+        '415':
+          description: Unsupported content type
+        '429':
+          description: Rate limited
+  /review-document:
+    post:
+      summary: Generate human review document
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Review document generated
+        '400':
+          description: Invalid payload
+        '403':
+          description: Not authorized
+        '409':
+          description: Idempotency conflict or in-flight operation
+        '413':
+          description: Payload exceeds maximum allowed size
+        '415':
+          description: Unsupported content type
+        '429':
+          description: Rate limited
+  /preview/validate:
+    post:
+      summary: Validate built-product payload for preview simulation
+      responses:
+        '200':
+          description: Payload valid for preview
+        '400':
+          description: Payload invalid
+        '403':
+          description: Not authorized
+        '413':
+          description: Payload exceeds maximum allowed size
+        '415':
+          description: Unsupported content type
+        '429':
+          description: Rate limited
+  /preview/simulate:
+    post:
+      summary: Simulate preview session output from built-product payload
+      responses:
+        '200':
+          description: Preview simulation output generated
+        '400':
+          description: Validation or compatibility failure
+        '403':
+          description: Not authorized
+        '413':
+          description: Payload exceeds maximum allowed size
+        '415':
+          description: Unsupported content type
+        '429':
+          description: Rate limited
+  /preview/report:
+    post:
+      summary: Generate pre-inclusion compatibility report from built-product payload
+      responses:
+        '200':
+          description: Report generated with Go recommendation
+        '400':
+          description: Report generated with No-Go due to blockers
+        '403':
+          description: Not authorized
+        '413':
+          description: Payload exceeds maximum allowed size
+        '415':
+          description: Unsupported content type
+        '429':
+          description: Rate limited

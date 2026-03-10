@@ -4,7 +4,19 @@ import { execSync } from 'node:child_process';
 const steps = [
   'npm run build',
   'npm test',
-  'node tools/generator-cli/dist/index.js ci-check fixtures/golden/pilot-intake.json'
+  'npm run pr:compliance:check',
+  'npm run secret:scan:check',
+  'npm run audit:schema:check',
+  'npm run rbac:check',
+  'npm run secrets:rotation:check',
+  'npm run openapi:compat:check',
+  'npm run deps:policy:check',
+  'npm run slo:check',
+  'npm run layout:check',
+  'npm run workflow:check',
+  'node tools/generator-cli/dist/index.js ci-check fixtures/golden/pilot-intake.json',
+  'npm run perf:baseline',
+  'npm run dr:check'
 ];
 
 for (const step of steps) {

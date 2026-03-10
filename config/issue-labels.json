@@ -1,0 +1,10 @@
+{
+  "labels": [
+    { "name": "governance", "color": "1D76DB", "description": "Governance policy and compliance control work" },
+    { "name": "operations", "color": "0E8A16", "description": "Operational reliability and support workflows" },
+    { "name": "retention", "color": "FBCA04", "description": "Data/artifact retention and lifecycle controls" },
+    { "name": "branch-protection", "color": "B60205", "description": "Branch protection policy and remediation" },
+    { "name": "security", "color": "5319E7", "description": "Security posture and vulnerability controls" },
+    { "name": "compliance", "color": "0052CC", "description": "Compliance evidence and audit readiness" }
+  ]
+}

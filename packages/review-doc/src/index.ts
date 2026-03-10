@@ -17,6 +17,16 @@ export type ReviewDocResult = {
   recommendation: 'Go' | 'No-Go';
 };
 
+export type PreInclusionReportInput = {
+  adapter: { id?: string; version?: string } | null;
+  summary: { blocking: number; warning: number };
+  readinessScore: number;
+  recommendation: 'Go' | 'No-Go';
+  permissionMatrix?: Record<string, { roles: number; permissions: number }> | null;
+  mappingCoverage?: { coveragePercent: number; uniqueCanonicalModels: number; lowConfidenceCount: number } | null;
+  diagnostics: Array<{ code: string; severity: 'blocking' | 'warning'; path: string; message: string }>;
+};
+
 export function generateHumanReviewDocument(intake: IntakeLike, validation: ValidationResult): ReviewDocResult {
   const blockingCount = validation.diagnostics.filter((d) => d.severity === 'blocking').length;
   const warningCodes = new Set(validation.diagnostics.filter((d) => d.severity === 'warning').map((d) => d.code));
@@ -66,6 +76,46 @@ export function generateHumanReviewDocument(intake: IntakeLike, validation: Vali
   ].join('\n');
 
   return { markdown, readinessScore, recommendation };
+}
+
+export function generatePreInclusionReviewDocument(input: PreInclusionReportInput): ReviewDocResult {
+  const markdown = [
+    '# Pre-Inclusion Review Document',
+    '',
+    '## Adapter',
+    `- Adapter ID: ${input.adapter?.id ?? 'n/a'}`,
+    `- Adapter Version: ${input.adapter?.version ?? 'n/a'}`,
+    '',
+    '## Contract Compliance Summary',
+    `- Blocking diagnostics: ${input.summary.blocking}`,
+    `- Warning diagnostics: ${input.summary.warning}`,
+    '',
+    '## Permission Matrix Coverage',
+    `- BUCS roles: ${input.permissionMatrix?.bucs?.roles ?? 0}`,
+    `- Firm roles: ${input.permissionMatrix?.firm?.roles ?? 0}`,
+    `- Company roles: ${input.permissionMatrix?.company?.roles ?? 0}`,
+    '',
+    '## Canonical Mapping Coverage',
+    `- Coverage (%): ${input.mappingCoverage?.coveragePercent ?? 0}`,
+    `- Unique canonical models: ${input.mappingCoverage?.uniqueCanonicalModels ?? 0}`,
+    `- Low confidence mappings: ${input.mappingCoverage?.lowConfidenceCount ?? 0}`,
+    '',
+    '## Diagnostics',
+    ...(input.diagnostics.length === 0
+      ? ['- None']
+      : input.diagnostics.map((entry) => `- [${entry.severity.toUpperCase()}] ${entry.code} ${entry.path} - ${entry.message}`)),
+    '',
+    '## Decision',
+    `- Readiness Score: ${input.readinessScore}`,
+    `- Recommendation: ${input.recommendation}`,
+    ''
+  ].join('\n');
+
+  return {
+    markdown,
+    readinessScore: input.readinessScore,
+    recommendation: input.recommendation
+  };
 }
 
 function renderPermissionMatrix(intake: IntakeLike): string[] {

@@ -1,25 +1,221 @@
 import express from 'express';
 import { compileManifest } from '@pgw/packages-compiler/dist/index.js';
-import { generateHumanReviewDocument } from '@pgw/packages-review-doc/dist/index.js';
+import {
+  analyzeCanonicalMappingCoverage,
+  analyzePermissionMatrix,
+  createPilotLoanAdapter,
+  createProductAdapterRegistry,
+  generateDeterministicPreviewArtifacts,
+  validateBuiltProductIntake,
+  validateBuiltProductWithRegistry
+} from '@pgw/packages-product-adapters/dist/index.js';
+import { generateHumanReviewDocument, generatePreInclusionReviewDocument } from '@pgw/packages-review-doc/dist/index.js';
 import { generatePilotScaffold } from '@pgw/packages-scaffold-templates/dist/index.js';
 import { toHumanSummary, validateIntake } from '@pgw/packages-validator/dist/index.js';
 import { authenticatePrincipal, hasWizardAccess } from './auth.js';
+import { createAuditLogger, resolveRequestId, type AuditLogger, type AuditOutcome } from './audit.js';
+import {
+  createIdempotencyStore,
+  createRedisIdempotencyStore,
+  fingerprintPayload,
+  type IdempotencyStore
+} from './idempotency.js';
+import { createRateLimiter, createRedisRateLimiter, type RateLimitCheckResult, type RateLimiter } from './rate-limit.js';
+import { createRedisExecutorFromEnv, type RedisExecutor } from './redis-executor.js';
+import { createTelemetryClient, type TelemetryClient, type TelemetrySpan } from './telemetry.js';
+import { createTenantQuotaPolicy, loadTenantQuotaConfigOrThrow } from './tenant-quotas.js';
 
-export function createApp() {
+type AppOptions = {
+  rateLimiter?: RateLimiter;
+  idempotencyStore?: IdempotencyStore;
+  auditLogger?: AuditLogger;
+  telemetry?: TelemetryClient;
+  redisExecutor?: RedisExecutor | null;
+  redisFallbackMode?: 'fail-open' | 'fail-closed';
+  jsonBodyLimitBytes?: number;
+};
+
+export function createApp(options: AppOptions = {}) {
   const app = express();
-  app.use(express.json({ limit: '1mb' }));
+  app.disable('x-powered-by');
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+    if (process.env.NODE_ENV === 'production') {
+      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+    next();
+  });
+  app.use((req, res, next) => {
+    if (req.method !== 'POST') {
+      next();
+      return;
+    }
+    if (!req.is('application/json')) {
+      res.status(415).json({ message: 'Content-Type must be application/json.' });
+      return;
+    }
+    next();
+  });
+  const jsonBodyLimitBytes = options.jsonBodyLimitBytes ?? readEnvPositiveInteger('WIZARD_JSON_BODY_LIMIT_BYTES', 1_048_576);
+  app.use(express.json({ limit: `${jsonBodyLimitBytes}b` }));
+  const auditLogger = options.auditLogger ?? createAuditLogger();
+  const telemetry = options.telemetry ?? createTelemetryClient();
+  const redisExecutor = options.redisExecutor === undefined ? createRedisExecutorFromEnv() : options.redisExecutor;
+  const redisFallbackMode = resolveRedisFallbackMode(options.redisFallbackMode ?? process.env.WIZARD_REDIS_FALLBACK_MODE);
+  const allowRedisFallback = redisFallbackMode === 'fail-open';
+  const maxRatePerMinute = readEnvPositiveInteger(
+    'WIZARD_RATE_LIMIT_MAX_PER_MINUTE',
+    process.env.NODE_ENV === 'test' ? 10_000 : 120
+  );
+  const tenantQuotaPath = process.env.WIZARD_TENANT_QUOTA_CONFIG_PATH ?? 'config/tenant-quotas.json';
+  const tenantQuotaConfig = loadTenantQuotaConfigOrThrow(tenantQuotaPath);
+  const tenantQuotaPolicy = createTenantQuotaPolicy(tenantQuotaConfig, maxRatePerMinute);
+  const idempotencyTtlMs = readEnvPositiveInteger('WIZARD_IDEMPOTENCY_TTL_MS', 86_400_000);
+  const distributedRateLimiterEnabled = Boolean(redisExecutor) && !options.rateLimiter;
+  const distributedIdempotencyEnabled = Boolean(redisExecutor) && !options.idempotencyStore;
+  const limiterByPerMinute = new Map<number, RateLimiter>();
+  const fallbackLimiterByPerMinute = new Map<number, RateLimiter>();
+  const rateLimiterFactory = (perMinute: number): RateLimiter => {
+    if (options.rateLimiter) {
+      return options.rateLimiter;
+    }
+    if (redisExecutor) {
+      return createRedisRateLimiter({ executor: redisExecutor, maxRequests: perMinute, windowMs: 60_000 });
+    }
+    return createRateLimiter({ maxRequests: perMinute, windowMs: 60_000 });
+  };
+  const resolveRateLimiter = (perMinute: number): RateLimiter => {
+    const existing = limiterByPerMinute.get(perMinute);
+    if (existing) {
+      return existing;
+    }
+    const next = rateLimiterFactory(perMinute);
+    limiterByPerMinute.set(perMinute, next);
+    return next;
+  };
+  const resolveFallbackRateLimiter = (perMinute: number): RateLimiter => {
+    const existing = fallbackLimiterByPerMinute.get(perMinute);
+    if (existing) {
+      return existing;
+    }
+    const next = createRateLimiter({ maxRequests: perMinute, windowMs: 60_000 });
+    fallbackLimiterByPerMinute.set(perMinute, next);
+    return next;
+  };
+  const idempotencyStore =
+    options.idempotencyStore ??
+    (redisExecutor
+      ? createRedisIdempotencyStore({ executor: redisExecutor, ttlMs: idempotencyTtlMs })
+      : createIdempotencyStore({ ttlMs: idempotencyTtlMs }));
+  const fallbackIdempotencyStore = createIdempotencyStore({ ttlMs: idempotencyTtlMs });
+  const productAdapterRegistry = createProductAdapterRegistry([createPilotLoanAdapter()]);
+
+  app.use((req, res, next) => {
+    const span = telemetry.startSpan('http.server.request', {
+      method: req.method,
+      path: req.path
+    });
+    const started = Date.now();
+
+    res.once('finish', () => {
+      const statusCode = res.statusCode;
+      const outcome = statusCode === 429 ? 'throttled' : statusCode >= 500 ? 'error' : 'success';
+      finalizeTelemetry(telemetry, span, started, statusCode, req.path, req.method, outcome);
+    });
+
+    next();
+  });
+
+  app.get('/healthz', (_req, res) => {
+    res.status(200).json({ status: 'ok' });
+  });
+
+  app.get('/readyz', async (_req, res) => {
+    const checks: Record<string, 'ok' | 'failed' | 'not-configured'> = {
+      api: 'ok',
+      redis: 'not-configured'
+    };
+
+    if (redisExecutor) {
+      try {
+        await redisExecutor.run(async (client) => {
+          await client.ping();
+        });
+        checks.redis = 'ok';
+      } catch {
+        checks.redis = 'failed';
+      }
+    }
+
+    const ready = Object.values(checks).every((status) => status === 'ok' || status === 'not-configured');
+    res.status(ready ? 200 : 503).json({ ready, checks });
+  });
 
   app.get('/authz/wizard-entry', async (req, res) => {
     const principal = await authenticatePrincipal(req);
+    const requestId = resolveRequestId(req.header('x-request-id'));
+    const tenantId = resolveTenantId(req);
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'authz:wizard-entry');
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('authz:wizard-entry', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/authz/wizard-entry',
+        action: 'wizard-entry',
+        outcome: 'throttled',
+        principalSub: principal?.sub
+      });
+      return;
+    }
+
     if (!hasWizardAccess(principal)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/authz/wizard-entry',
+        action: 'wizard-entry',
+        outcome: 'deny',
+        principalSub: principal?.sub
+      });
       res.status(403).json({ authorized: false });
       return;
     }
 
+    emitAudit(auditLogger, {
+      requestId,
+      tenantId,
+      endpoint: '/authz/wizard-entry',
+      action: 'wizard-entry',
+      outcome: 'allow',
+      principalSub: principal?.sub
+    });
     res.status(200).json({ authorized: true, sub: principal?.sub });
   });
 
-  app.post('/validate', (req, res) => {
+  app.post('/validate', async (req, res) => {
+    const tenantId = resolveTenantId(req);
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'validate');
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('validate', resolveRequestIdentity(req), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
+      return;
+    }
+
     const validation = validateIntake(req.body);
     res.status(validation.valid ? 200 : 400).json({
       valid: validation.valid,
@@ -31,54 +227,726 @@ export function createApp() {
 
   app.post('/compile', async (req, res) => {
     const principal = await authenticatePrincipal(req);
-    if (!hasWizardAccess(principal)) {
+    const requestId = resolveRequestId(req.header('x-request-id'));
+    const tenantId = resolveTenantId(req);
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'compile');
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('compile', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/compile',
+        action: 'compile',
+        outcome: 'throttled',
+        principalSub: principal?.sub
+      });
+      return;
+    }
+
+    if (!principal || !hasWizardAccess(principal)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/compile',
+        action: 'compile',
+        outcome: 'deny',
+        principalSub: principal?.sub
+      });
       res.status(403).json({ message: 'Forbidden' });
       return;
     }
 
     try {
       const manifest = compileManifest(req.body as any);
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/compile',
+        action: 'compile',
+        outcome: 'success',
+        principalSub: principal.sub
+      });
       res.status(200).json({ manifest });
     } catch (error) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/compile',
+        action: 'compile',
+        outcome: 'failure',
+        principalSub: principal.sub,
+        detail: asMessage(error)
+      });
       res.status(400).json({ message: asMessage(error) });
     }
   });
 
   app.post('/generate', async (req, res) => {
     const principal = await authenticatePrincipal(req);
-    if (!hasWizardAccess(principal)) {
+    const requestId = resolveRequestId(req.header('x-request-id'));
+    const tenantId = resolveTenantId(req);
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'generate');
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('generate', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/generate',
+        action: 'generate',
+        outcome: 'throttled',
+        principalSub: principal?.sub
+      });
+      return;
+    }
+
+    if (!principal || !hasWizardAccess(principal)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/generate',
+        action: 'generate',
+        outcome: 'deny',
+        principalSub: principal?.sub
+      });
       res.status(403).json({ message: 'Forbidden' });
       return;
     }
 
     try {
-      const manifest = compileManifest(req.body as any);
-      const output = generatePilotScaffold(manifest);
-      res.status(200).json(output);
+      await runIdempotentJson(
+        req,
+        res,
+        {
+          primary: idempotencyStore,
+          fallback: distributedIdempotencyEnabled && allowRedisFallback ? fallbackIdempotencyStore : undefined
+        },
+        'generate',
+        resolveRequestIdentity(req, principal.sub),
+        async () => {
+          const manifest = compileManifest(req.body as any);
+          const output = generatePilotScaffold(manifest);
+          return { status: 200, body: output };
+        },
+        ({ outcome, detail }) => {
+          emitAudit(auditLogger, {
+            requestId,
+            tenantId,
+            endpoint: '/generate',
+            action: 'generate',
+            outcome,
+            principalSub: principal.sub,
+            detail
+          });
+        }
+      );
     } catch (error) {
-      res.status(400).json({ message: asMessage(error) });
+      handleBackendUnavailable(res, error);
     }
   });
 
   app.post('/review-document', async (req, res) => {
     const principal = await authenticatePrincipal(req);
-    if (!hasWizardAccess(principal)) {
+    const requestId = resolveRequestId(req.header('x-request-id'));
+    const tenantId = resolveTenantId(req);
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'review-document');
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('review-document', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/review-document',
+        action: 'review-document',
+        outcome: 'throttled',
+        principalSub: principal?.sub
+      });
+      return;
+    }
+
+    if (!principal || !hasWizardAccess(principal)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/review-document',
+        action: 'review-document',
+        outcome: 'deny',
+        principalSub: principal?.sub
+      });
       res.status(403).json({ message: 'Forbidden' });
       return;
     }
 
     try {
-      const validation = validateIntake(req.body);
-      const review = generateHumanReviewDocument(req.body as any, validation);
-      res.status(200).json(review);
+      await runIdempotentJson(
+        req,
+        res,
+        {
+          primary: idempotencyStore,
+          fallback: distributedIdempotencyEnabled && allowRedisFallback ? fallbackIdempotencyStore : undefined
+        },
+        'review-document',
+        resolveRequestIdentity(req, principal.sub),
+        async () => {
+          const validation = validateIntake(req.body);
+          const review = generateHumanReviewDocument(req.body as any, validation);
+          return { status: 200, body: review };
+        },
+        ({ outcome, detail }) => {
+          emitAudit(auditLogger, {
+            requestId,
+            tenantId,
+            endpoint: '/review-document',
+            action: 'review-document',
+            outcome,
+            principalSub: principal.sub,
+            detail
+          });
+        }
+      );
     } catch (error) {
-      res.status(400).json({ message: asMessage(error) });
+      handleBackendUnavailable(res, error);
     }
   });
 
+  app.post('/preview/validate', async (req, res) => {
+    const principal = await authenticatePrincipal(req);
+    const tenantId = resolveTenantId(req);
+    const requestId = resolveRequestId(req.header('x-request-id'));
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'preview:validate');
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('preview:validate', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
+      return;
+    }
+
+    if (!principal || !hasWizardAccess(principal)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/preview/validate',
+        action: 'preview-validate',
+        outcome: 'deny',
+        principalSub: principal?.sub
+      });
+      res.status(403).json({ message: 'Forbidden' });
+      return;
+    }
+    if (!tenantMatchesPayload(req, tenantId)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/preview/validate',
+        action: 'preview-validate',
+        outcome: 'deny',
+        principalSub: principal.sub,
+        detail: 'Tenant header does not match preview payload tenant.'
+      });
+      res.status(403).json({ message: 'Tenant mismatch between request context and payload.' });
+      return;
+    }
+
+    const validation = validateBuiltProductIntake(req.body as any);
+    emitAudit(auditLogger, {
+      requestId,
+      tenantId,
+      endpoint: '/preview/validate',
+      action: 'preview-validate',
+      outcome: validation.valid ? 'success' : 'failure',
+      principalSub: principal.sub
+    });
+    res.status(validation.valid ? 200 : 400).json(validation);
+  });
+
+  app.post('/preview/simulate', async (req, res) => {
+    const principal = await authenticatePrincipal(req);
+    const tenantId = resolveTenantId(req);
+    const requestId = resolveRequestId(req.header('x-request-id'));
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'preview:simulate');
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('preview:simulate', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
+      return;
+    }
+
+    if (!principal || !hasWizardAccess(principal)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/preview/simulate',
+        action: 'preview-simulate',
+        outcome: 'deny',
+        principalSub: principal?.sub
+      });
+      res.status(403).json({ message: 'Forbidden' });
+      return;
+    }
+    if (!tenantMatchesPayload(req, tenantId)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/preview/simulate',
+        action: 'preview-simulate',
+        outcome: 'deny',
+        principalSub: principal.sub,
+        detail: 'Tenant header does not match preview payload tenant.'
+      });
+      res.status(403).json({ message: 'Tenant mismatch between request context and payload.' });
+      return;
+    }
+
+    const validation = validateBuiltProductWithRegistry(req.body as any, productAdapterRegistry);
+    if (!validation.valid) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/preview/simulate',
+        action: 'preview-simulate',
+        outcome: 'failure',
+        principalSub: principal.sub
+      });
+      res.status(400).json(validation);
+      return;
+    }
+
+    const body = req.body as any;
+    const excelCapabilities = resolveCapabilities(body.integrations?.excelPlugin?.details, 'excel');
+    const workforceCapabilities = resolveCapabilities(body.integrations?.workforce?.details, 'workforce');
+    const adapter = productAdapterRegistry.resolve({
+      adapterId: body.adapter.id,
+      adapterVersion: body.adapter.version,
+      tenantId: body.tenant.id,
+      productId: body.product.id,
+      metadata: {
+        productType: body.product.type,
+        displayName: body.product.displayName,
+        canonicalMappings: body.mappings ?? [],
+        excelCapabilities: body.integrations?.excelPlugin?.enabled ? excelCapabilities : [],
+        workforceCapabilities: body.integrations?.workforce?.enabled ? workforceCapabilities : [],
+        uiScreens: body.preview?.uiScreens ?? []
+      }
+    });
+    const output = adapter.transform({
+      adapterId: body.adapter.id,
+      adapterVersion: body.adapter.version,
+      tenantId: body.tenant.id,
+      productId: body.product.id,
+      metadata: {
+        productType: body.product.type,
+        displayName: body.product.displayName,
+        canonicalMappings: body.mappings ?? [],
+        excelCapabilities: body.integrations?.excelPlugin?.enabled ? excelCapabilities : [],
+        workforceCapabilities: body.integrations?.workforce?.enabled ? workforceCapabilities : [],
+        uiScreens: body.preview?.uiScreens ?? []
+      }
+    });
+
+    emitAudit(auditLogger, {
+      requestId,
+      tenantId,
+      endpoint: '/preview/simulate',
+      action: 'preview-simulate',
+      outcome: 'success',
+      principalSub: principal.sub
+    });
+    const artifacts = generateDeterministicPreviewArtifacts(output.previewSession);
+    const previewRetentionHours = readEnvPositiveInteger('WIZARD_PREVIEW_ARTIFACT_RETENTION_HOURS', 24);
+    res.status(200).json({
+      validation,
+      output,
+      artifacts,
+      artifactPolicy: {
+        retentionHours: previewRetentionHours
+      }
+    });
+  });
+
+  app.post('/preview/report', async (req, res) => {
+    const principal = await authenticatePrincipal(req);
+    const tenantId = resolveTenantId(req);
+    const requestId = resolveRequestId(req.header('x-request-id'));
+    const rateLimitPerMinute = tenantQuotaPolicy.resolvePerMinute(tenantId, 'preview:report');
+    let rateLimit;
+    try {
+      rateLimit = await checkRateLimit('preview:report', resolveRequestIdentity(req, principal?.sub), rateLimitPerMinute);
+    } catch (error) {
+      handleBackendUnavailable(res, error);
+      return;
+    }
+    if (!applyRateLimit(res, rateLimit.result, rateLimit.backend)) {
+      return;
+    }
+
+    if (!principal || !hasWizardAccess(principal)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/preview/report',
+        action: 'preview-report',
+        outcome: 'deny',
+        principalSub: principal?.sub
+      });
+      res.status(403).json({ message: 'Forbidden' });
+      return;
+    }
+    if (!tenantMatchesPayload(req, tenantId)) {
+      emitAudit(auditLogger, {
+        requestId,
+        tenantId,
+        endpoint: '/preview/report',
+        action: 'preview-report',
+        outcome: 'deny',
+        principalSub: principal.sub,
+        detail: 'Tenant header does not match preview payload tenant.'
+      });
+      res.status(403).json({ message: 'Tenant mismatch between request context and payload.' });
+      return;
+    }
+
+    const validation = validateBuiltProductWithRegistry(req.body as any, productAdapterRegistry);
+    const permissionAnalysis = analyzePermissionMatrix((req.body as any).permissions ?? {});
+    const mappingCoverage = analyzeCanonicalMappingCoverage(
+      (((req.body as any).mappings ?? []) as Array<{ canonicalModel?: string; confidence?: number }>).map((entry) => ({
+        canonicalModel: entry.canonicalModel ?? '',
+        confidence: entry.confidence ?? 0
+      }))
+    );
+    const combinedBlocking = validation.summary.blocking + permissionAnalysis.summary.blocking;
+    const combinedWarning =
+      validation.summary.warning + permissionAnalysis.summary.warning + mappingCoverage.diagnostics.length;
+    const readinessScore = Math.max(0, 100 - combinedWarning * 5 - combinedBlocking * 20);
+    const recommendation = combinedBlocking > 0 ? 'No-Go' : 'Go';
+
+    emitAudit(auditLogger, {
+      requestId,
+      tenantId,
+      endpoint: '/preview/report',
+      action: 'preview-report',
+      outcome: combinedBlocking === 0 ? 'success' : 'failure',
+      principalSub: principal.sub
+    });
+    const reviewDoc = generatePreInclusionReviewDocument({
+      adapter: (req.body as any).adapter ?? null,
+      summary: {
+        blocking: combinedBlocking,
+        warning: combinedWarning
+      },
+      readinessScore,
+      recommendation,
+      permissionMatrix: permissionAnalysis.coverage,
+      mappingCoverage: {
+        coveragePercent: mappingCoverage.coveragePercent,
+        uniqueCanonicalModels: mappingCoverage.uniqueCanonicalModels,
+        lowConfidenceCount: mappingCoverage.lowConfidenceCount
+      },
+      diagnostics: [...validation.diagnostics, ...permissionAnalysis.diagnostics]
+    });
+
+    res.status(combinedBlocking === 0 ? 200 : 400).json({
+      adapter: (req.body as any).adapter ?? null,
+      summary: {
+        blocking: combinedBlocking,
+        warning: combinedWarning
+      },
+      diagnostics: [...validation.diagnostics, ...permissionAnalysis.diagnostics],
+      permissionMatrix: permissionAnalysis.coverage,
+      mappingCoverage: {
+        coveragePercent: mappingCoverage.coveragePercent,
+        uniqueCanonicalModels: mappingCoverage.uniqueCanonicalModels,
+        lowConfidenceCount: mappingCoverage.lowConfidenceCount
+      },
+      readinessScore: reviewDoc.readinessScore,
+      recommendation: reviewDoc.recommendation,
+      markdown: reviewDoc.markdown
+    });
+  });
+
+  app.use((error: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (!error || typeof error !== 'object') {
+      next(error);
+      return;
+    }
+
+    const parseError = error as { type?: string; status?: number };
+    if (parseError.type === 'entity.parse.failed') {
+      res.status(400).json({ message: 'Invalid JSON payload.' });
+      return;
+    }
+    if (parseError.type === 'entity.too.large' || parseError.status === 413) {
+      res.status(413).json({ message: 'Payload exceeds maximum allowed size.' });
+      return;
+    }
+
+    next(error);
+  });
+
   return app;
+
+  async function checkRateLimit(endpoint: string, identity: string, perMinute: number) {
+    const primary = resolveRateLimiter(perMinute);
+    if (!distributedRateLimiterEnabled) {
+      return { result: await primary.check(endpoint, identity), backend: 'primary' as const };
+    }
+
+    try {
+      return { result: await primary.check(endpoint, identity), backend: 'primary' as const };
+    } catch {
+      if (!allowRedisFallback) {
+        throw new Error('RATE_LIMIT_BACKEND_UNAVAILABLE');
+      }
+      return {
+        result: await resolveFallbackRateLimiter(perMinute).check(endpoint, identity),
+        backend: 'fallback' as const
+      };
+    }
+  }
 }
 
 function asMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Unknown error';
+}
+
+function resolveRequestIdentity(req: express.Request, subject?: string): string {
+  const tenant = resolveTenantId(req);
+  const principal = subject ?? req.ip ?? 'unknown-principal';
+  return `${tenant}:${principal}`;
+}
+
+function resolveTenantId(req: express.Request): string {
+  return req.header('x-tenant-id') ?? req.header('x-tenant') ?? req.query.tenant?.toString() ?? 'unknown-tenant';
+}
+
+function tenantMatchesPayload(req: express.Request, requestTenantId: string): boolean {
+  const body = req.body as { tenant?: { id?: string } } | null;
+  const payloadTenantId = body?.tenant?.id;
+  if (!payloadTenantId) {
+    return true;
+  }
+  return payloadTenantId === requestTenantId;
+}
+
+function applyRateLimit(res: express.Response, result: RateLimitCheckResult, backend: 'primary' | 'fallback'): boolean {
+  res.setHeader('X-RateLimit-Limit', String(result.limit));
+  res.setHeader('X-RateLimit-Remaining', String(result.remaining));
+  res.setHeader('X-RateLimit-Reset', String(result.resetAtEpochSeconds));
+  res.setHeader('X-RateLimit-Backend', backend);
+
+  if (result.allowed) {
+    return true;
+  }
+
+  const nowEpochSeconds = Math.ceil(Date.now() / 1000);
+  const retryAfter = Math.max(1, result.resetAtEpochSeconds - nowEpochSeconds);
+  res.setHeader('Retry-After', String(retryAfter));
+  res.status(429).json({ message: 'Rate limit exceeded. Retry later.' });
+  return false;
+}
+
+function readEnvPositiveInteger(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
+async function runIdempotentJson(
+  req: express.Request,
+  res: express.Response,
+  stores: { primary: IdempotencyStore; fallback?: IdempotencyStore | undefined },
+  endpoint: string,
+  identityScope: string,
+  execute: () => Promise<{ status: number; body: unknown }>,
+  onAudit: (event: { outcome: AuditOutcome; detail?: string | undefined }) => void
+): Promise<void> {
+  const idempotencyKey = req.header('idempotency-key');
+  if (!idempotencyKey) {
+    await sendJsonResponse(res, execute, onAudit);
+    return;
+  }
+
+  const requestFingerprint = fingerprintPayload(req.body);
+  const scope = `${endpoint}:${identityScope}`;
+  const selected = await selectIdempotencyStore(stores, scope, idempotencyKey, requestFingerprint);
+  const lookup = selected.lookup;
+  res.setHeader('X-Idempotency-Backend', selected.backend);
+
+  if (lookup.kind === 'hit') {
+    onAudit({ outcome: 'replayed' });
+    res.setHeader('X-Idempotency-Status', 'replayed');
+    res.status(lookup.response.status).json(lookup.response.body);
+    return;
+  }
+
+  if (lookup.kind === 'conflict') {
+    onAudit({ outcome: 'conflict', detail: lookup.message });
+    res.setHeader('X-Idempotency-Status', 'conflict');
+    res.status(409).json({ message: lookup.message });
+    return;
+  }
+
+  try {
+    const result = await execute();
+    await selected.store.save(scope, idempotencyKey, requestFingerprint, {
+      status: result.status,
+      body: result.body,
+      createdAtMs: Date.now()
+    });
+    onAudit({ outcome: 'success' });
+    res.setHeader('X-Idempotency-Status', 'created');
+    res.status(result.status).json(result.body);
+  } catch (error) {
+    await selected.store.discard(scope, idempotencyKey);
+    onAudit({ outcome: 'failure', detail: asMessage(error) });
+    res.status(400).json({ message: asMessage(error) });
+  }
+}
+
+async function selectIdempotencyStore(
+  stores: { primary: IdempotencyStore; fallback?: IdempotencyStore | undefined },
+  scope: string,
+  key: string,
+  requestFingerprint: string
+): Promise<{
+  store: IdempotencyStore;
+  backend: 'primary' | 'fallback';
+  lookup: Awaited<ReturnType<IdempotencyStore['lookup']>>;
+}> {
+  try {
+    return {
+      store: stores.primary,
+      backend: 'primary',
+      lookup: await stores.primary.lookup(scope, key, requestFingerprint)
+    };
+  } catch {
+    if (!stores.fallback) {
+      throw new Error('IDEMPOTENCY_BACKEND_UNAVAILABLE');
+    }
+    return {
+      store: stores.fallback,
+      backend: 'fallback',
+      lookup: await stores.fallback.lookup(scope, key, requestFingerprint)
+    };
+  }
+}
+
+function resolveRedisFallbackMode(value: string | undefined): 'fail-open' | 'fail-closed' {
+  if (value === 'fail-closed') {
+    return 'fail-closed';
+  }
+  return 'fail-open';
+}
+
+function resolveCapabilities(details: unknown, fallbackCapability: string): string[] {
+  if (!details || typeof details !== 'object') {
+    return [fallbackCapability];
+  }
+
+  const maybe = (details as { capabilities?: unknown }).capabilities;
+  if (!Array.isArray(maybe)) {
+    return [fallbackCapability];
+  }
+
+  const capabilities = maybe.filter((entry): entry is string => typeof entry === 'string' && entry.length > 0);
+  if (capabilities.length === 0) {
+    return [fallbackCapability];
+  }
+  return capabilities;
+}
+
+function handleBackendUnavailable(res: express.Response, error: unknown): void {
+  const message = asMessage(error);
+  if (message.includes('BACKEND_UNAVAILABLE')) {
+    res.status(503).json({ message: 'Required backend dependency unavailable.' });
+    return;
+  }
+  res.status(500).json({ message: asMessage(error) });
+}
+
+async function sendJsonResponse(
+  res: express.Response,
+  execute: () => Promise<{ status: number; body: unknown }>,
+  onAudit: (event: { outcome: AuditOutcome; detail?: string | undefined }) => void
+): Promise<void> {
+  try {
+    const result = await execute();
+    onAudit({ outcome: 'success' });
+    res.status(result.status).json(result.body);
+  } catch (error) {
+    onAudit({ outcome: 'failure', detail: asMessage(error) });
+    res.status(400).json({ message: asMessage(error) });
+  }
+}
+
+function emitAudit(
+  auditLogger: AuditLogger,
+  details: {
+    endpoint: string;
+    action: string;
+    outcome: AuditOutcome;
+    requestId: string;
+    tenantId: string;
+    principalSub?: string | undefined;
+    detail?: string | undefined;
+  }
+): void {
+  auditLogger.emit({
+    eventType: details.action === 'wizard-entry' ? 'wizard-authz' : 'wizard-operation',
+    action: details.action,
+    outcome: details.outcome,
+    endpoint: details.endpoint,
+    requestId: details.requestId,
+    tenantId: details.tenantId,
+    principalSub: details.principalSub,
+    detail: details.detail,
+    at: new Date().toISOString()
+  });
+}
+
+function finalizeTelemetry(
+  telemetry: TelemetryClient,
+  span: TelemetrySpan,
+  startedAtMs: number,
+  statusCode: number,
+  path: string,
+  method: string,
+  outcome: 'success' | 'error' | 'throttled'
+): void {
+  const durationMs = Math.max(0, Date.now() - startedAtMs);
+  const attrs = { method, path, statusCode, outcome };
+  telemetry.recordCounter('wizard_api_requests_total', 1, attrs);
+  telemetry.recordHistogram('wizard_api_request_duration_ms', durationMs, attrs);
+  span.end({ statusCode, outcome });
 }
