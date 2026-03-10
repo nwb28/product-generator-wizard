@@ -19,6 +19,7 @@ Behavior:
 - `WIZARD_RATE_LIMIT_MAX_PER_MINUTE` (optional, positive integer)
 - `WIZARD_IDEMPOTENCY_TTL_MS` (optional, positive integer)
 - `WIZARD_JSON_BODY_LIMIT_BYTES` (optional, max accepted request body size in bytes; default `1048576`)
+- `WIZARD_SHUTDOWN_TIMEOUT_MS` (optional, graceful shutdown timeout in milliseconds; default `10000`)
 
 ### Distributed Store (Recommended for multi-instance deployments)
 - `WIZARD_REDIS_URL` (Redis connection URL, enables distributed rate limit and idempotency stores)
