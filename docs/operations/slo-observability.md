@@ -4,8 +4,8 @@
 This baseline covers `apps/generator-api` for enterprise operation with multi-tenant workloads.
 
 ## SLOs
-1. Availability SLO: `99.9%` successful requests (HTTP `<500`) over 30 days for `/validate`, `/compile`, `/generate`, `/review-document`.
-2. Latency SLO: p95 request latency under `750ms` for `/validate` and under `1500ms` for `/generate` over 30 days.
+1. Availability SLO: `99.9%` successful requests (HTTP `<500`) over 30 days for `/validate`, `/compile`, `/generate`, `/review-document`, `/preview/validate`, `/preview/simulate`, `/preview/report`.
+2. Latency SLO: p95 request latency under `750ms` for `/validate` and `/preview/validate`, and under `1500ms` for `/generate` and `/preview/simulate` over 30 days.
 3. Correctness SLO: `0` successful responses for requests that violate blocking contract rules.
 4. Abuse Protection SLO: `100%` of over-limit requests return `429` with `Retry-After`.
 

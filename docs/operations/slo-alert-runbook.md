@@ -2,6 +2,7 @@
 
 ## Signals
 - Synthetic probe status from `.github/workflows/synthetic-monitor.yml`
+- Preview probe status for `/preview/validate`, `/preview/simulate`, `/preview/report`
 - API metrics:
   - `wizard_api_requests_total`
   - `wizard_api_request_duration_ms`
