@@ -10,6 +10,7 @@ Documentation is organized by domain so operational and governance assets stay d
 - `docs/reference/maintainer-guide.md`
 - `docs/reference/environment-config.md`
 - `docs/reference/api-client.md`
+- `docs/reference/roadmap.md`
 
 ## Operations
 - `docs/operations/deployment-workflow.md`
