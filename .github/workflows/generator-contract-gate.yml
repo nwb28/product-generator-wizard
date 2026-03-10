@@ -54,6 +54,9 @@ jobs:
       - name: Verify workflow retention policy conformance
         run: node tools/validate-workflow-retention.mjs --policy config/artifact-retention-policy.json --workflows .github/workflows
 
+      - name: Verify OpenAPI compatibility policy
+        run: npm run openapi:compat:check
+
       - name: Verify dependency policy
         run: npm run deps:policy:check
 

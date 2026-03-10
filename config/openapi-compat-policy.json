@@ -1,0 +1,32 @@
+{
+  "requiredOperations": [
+    {
+      "method": "post",
+      "path": "/validate"
+    },
+    {
+      "method": "post",
+      "path": "/compile"
+    },
+    {
+      "method": "post",
+      "path": "/generate"
+    },
+    {
+      "method": "post",
+      "path": "/review-document"
+    },
+    {
+      "method": "post",
+      "path": "/preview/validate"
+    },
+    {
+      "method": "post",
+      "path": "/preview/simulate"
+    },
+    {
+      "method": "post",
+      "path": "/preview/report"
+    }
+  ]
+}

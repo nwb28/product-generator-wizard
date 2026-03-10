@@ -26,3 +26,6 @@ jobs:
 
       - name: Validate OpenAPI contract
         run: npm run openapi:check
+
+      - name: Validate OpenAPI compatibility baseline
+        run: npm run openapi:compat:check

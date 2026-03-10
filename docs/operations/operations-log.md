@@ -191,3 +191,12 @@
   - `.github/workflows/ci.yml`
   - `.github/workflows/generator-contract-gate.yml`
   - `.github/workflows/security-scan.yml`
+
+## Enterprise Ticket - OpenAPI Compatibility Gate
+- Added required-operation compatibility policy `config/openapi-compat-policy.json`.
+- Added compatibility checker `tools/check-openapi-compat.mjs` and tests `tools/check-openapi-compat.test.mjs`.
+- Enforced compatibility checks in:
+  - `npm run release:check`
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/generator-contract-gate.yml`
+  - `.github/workflows/openapi-contract.yml`
