@@ -1,0 +1,34 @@
+name: branch-protection-governance
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 8 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-main-protection:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fetch main branch protection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p .tmp
+          gh api repos/${{ github.repository }}/branches/main/protection > .tmp/main-branch-protection.json
+
+      - name: Verify required status checks
+        run: |
+          node tools/check-branch-protection.mjs \
+            --protection .tmp/main-branch-protection.json \
+            --required bootstrap,contract-gate,preview-contract-gate,security-scan,release-evidence-bundle

@@ -14,6 +14,7 @@
 | REM-010 | Branch protection for preview gate | High | Closed | DevOps | `main` now requires `preview-contract-gate` with strict checks and review enforcement. |
 | REM-011 | Preview threat model publication | Medium | Closed | Security | Published preview threat model with tenant/isolation/retention controls and residual risk tracking. |
 | REM-012 | Release evidence bundling | Medium | Closed | DevOps | Added release evidence workflow and bundle artifact linking preview gate, SBOM, and security scan outputs. |
+| REM-013 | Branch protection policy drift | High | Closed | DevOps | Added policy-as-code branch protection validation and required additional checks on `main`. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.

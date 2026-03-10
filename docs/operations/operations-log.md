@@ -51,3 +51,13 @@
   - `.tmp/release-evidence/release-evidence.json`
   - `.tmp/release-evidence/release-evidence.md`
   - `.tmp/release-evidence/raw/*` source evidence files
+
+## Enterprise Ticket - Branch Protection Policy As Code
+- Added workflow: `.github/workflows/branch-protection-governance.yml`.
+- Added validator: `tools/check-branch-protection.mjs`.
+- Updated `main` required checks to:
+  - `bootstrap`
+  - `contract-gate`
+  - `preview-contract-gate`
+  - `security-scan`
+  - `release-evidence-bundle`
