@@ -44,6 +44,7 @@
 | REM-040 | Audit event schema compatibility governance gap | High | Closed | Security | Added audit event schema policy/fixture validation, versioned audit records, and enforced checks in CI/contract/release/governance workflows. |
 | REM-041 | Pull request compliance checklist automation gap | Medium | Closed | DevOps | Added policy-driven PR compliance validation (workflow + deterministic fixture) enforcing required labels and checklist entries across PR, CI, and release gates. |
 | REM-042 | Repository secret pattern detection gate gap | High | Closed | Security | Added policy-driven secret pattern scanner with deterministic fixtures and enforced checks in CI/security/contract/release gates. |
+| REM-043 | OPA/Rego governance policy gate gap | High | Closed | Security | Added policy-as-code governance evaluator and enforced OPA-style policy checks in CI, contract gate, and release checks. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.

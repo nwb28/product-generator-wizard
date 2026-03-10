@@ -254,3 +254,12 @@
   - `.github/workflows/ci.yml`
   - `.github/workflows/generator-contract-gate.yml`
   - `.github/workflows/security-scan.yml`
+
+## Enterprise Ticket - OPA Governance Policy Gate
+- Added governance policy config `config/opa-governance-policy.json`.
+- Added policy evaluator `tools/evaluate-governance-policy.mjs` and tests `tools/evaluate-governance-policy.test.mjs`.
+- Added root command `npm run opa:check`.
+- Enforced checks in:
+  - `npm run release:check`
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/generator-contract-gate.yml`

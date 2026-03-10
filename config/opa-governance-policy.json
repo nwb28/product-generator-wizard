@@ -1,0 +1,6 @@
+{
+  "minimumCanonicalConfidence": 0.85,
+  "requiredOperations": ["create", "update", "list"],
+  "requireHttpsEvidenceLinks": true,
+  "requireNoPiiForPilotProfile": true
+}
