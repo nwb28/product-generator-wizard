@@ -17,6 +17,7 @@
 | REM-013 | Branch protection policy drift | High | Closed | DevOps | Added policy-as-code branch protection validation and required additional checks on `main`. |
 | REM-014 | Release evidence provenance attestation gap | Medium | Closed | DevOps | Added GitHub artifact provenance attestation for release evidence bundle outputs. |
 | REM-015 | Preview artifact retention purge automation | Medium | Closed | DevOps | Added scheduled purge workflow and retention cleanup utility for preview artifact roots. |
+| REM-016 | Build artifact strategy ambiguity | Low | Closed | Tech Lead | Published ADR-0001 defining source-only strategy with CI-generated artifacts. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.

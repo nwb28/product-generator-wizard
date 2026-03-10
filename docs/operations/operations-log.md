@@ -72,3 +72,8 @@
 - Added `tools/purge-preview-artifacts.mjs` with retention-based file cleanup logic.
 - Added scheduled workflow `.github/workflows/preview-artifact-retention.yml`.
 - Updated preview runbook with purge procedure and workflow linkage.
+
+## Enterprise Ticket - Build Artifact Strategy ADR
+- Added ADR document `docs/reference/adr/0001-build-artifact-strategy.md`.
+- Standardized policy to keep generated build outputs out of source control.
+- Linked ADR in documentation index for maintainer discoverability.

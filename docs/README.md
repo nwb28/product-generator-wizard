@@ -14,6 +14,7 @@ Documentation is organized by domain so operational and governance assets stay d
 - `docs/reference/phase7-architecture-rfc.md`
 - `docs/reference/adapter-authoring-guide.md`
 - `docs/reference/preview-operator-guide.md`
+- `docs/reference/adr/0001-build-artifact-strategy.md`
 
 ## Operations
 - `docs/operations/deployment-workflow.md`
