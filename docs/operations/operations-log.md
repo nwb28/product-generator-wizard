@@ -143,3 +143,8 @@
 - Added `tools/governance-self-test.mjs` and tests.
 - Added quarterly workflow `.github/workflows/governance-quarterly-self-test.yml`.
 - Workflow emits consolidated governance report artifact and opens issue on failure.
+
+## Enterprise Ticket - Label Bootstrap Baseline
+- Added label policy config `config/issue-labels.json`.
+- Added bootstrap tool `tools/bootstrap-issue-labels.mjs`.
+- Tool supports dry-run planning and apply mode for governance/operations alert labels.

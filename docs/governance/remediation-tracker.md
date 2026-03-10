@@ -30,6 +30,7 @@
 | REM-026 | Retention purge observability and stale-run alert gap | Medium | Closed | DevOps | Added scheduled retention observability workflow with stale-run issue alerting. |
 | REM-027 | Control evidence export packaging gap | Medium | Closed | DevOps | Added control-evidence export utility and scheduled artifact workflow for audit-ready bundles. |
 | REM-028 | Quarterly governance self-test automation gap | Medium | Closed | Tech Lead | Added quarterly self-test workflow and consolidated governance report artifact with alerting. |
+| REM-029 | Missing operational labels for governance workflows | Low | Closed | DevOps | Bootstrapped required repository labels (`governance`, `operations`, `retention`, `branch-protection`, `security`, `compliance`). |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.
