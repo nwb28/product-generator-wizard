@@ -33,3 +33,4 @@ Assuming 99.9% availability SLO:
 1. Synthetic probe returns to green for at least 2 consecutive runs.
 2. Fast-burn and slow-burn thresholds are below trigger levels.
 3. Incident record created in `docs/operations-log.md` with root cause and remediation.
+4. Alert routing and escalation follow `docs/alert-routing.md`.
