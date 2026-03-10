@@ -122,3 +122,9 @@
 - Added `tools/verify-deploy-attestation-path.mjs` and tests.
 - Wired the check into `.github/workflows/ci.yml`.
 - CI now fails if deploy workflow loses attestation run resolution, artifact download, or verification step.
+
+## Enterprise Ticket - Branch Protection Remediation Workflow
+- Added baseline policy file: `config/branch-protection-baseline.json`.
+- Added apply utility: `tools/apply-branch-protection-baseline.mjs`.
+- Added manual approval-gated workflow: `.github/workflows/branch-protection-remediation.yml`.
+- Workflow requires explicit `apply=true` and runs in `governance-remediation` environment.
