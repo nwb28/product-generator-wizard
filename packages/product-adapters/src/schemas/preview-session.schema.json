@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pgw/contracts/preview-session.schema.json",
+  "title": "Preview Session",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sessionId", "tenantId", "productId", "views"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "sessionId": { "type": "string", "minLength": 1 },
+    "tenantId": { "type": "string", "minLength": 1 },
+    "productId": { "type": "string", "minLength": 1 },
+    "views": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "payload"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    },
+    "generatedArtifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "hash"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "hash": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

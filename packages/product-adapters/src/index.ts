@@ -1,3 +1,12 @@
+import adaptersIndex from './adapters.index.json' with { type: 'json' };
+import builtProductIntakeSchema from './schemas/built-product-intake.schema.json' with { type: 'json' };
+import compatibilityReportSchema from './schemas/compatibility-report.schema.json' with { type: 'json' };
+import previewSessionSchema from './schemas/preview-session.schema.json' with { type: 'json' };
+
+export const ADAPTER_SCHEMA_V1 = '1.0.0' as const;
+
+export { adaptersIndex, builtProductIntakeSchema, previewSessionSchema, compatibilityReportSchema };
+
 export type AdapterSeverity = 'blocking' | 'warning';
 
 export type AdapterDiagnostic = {
