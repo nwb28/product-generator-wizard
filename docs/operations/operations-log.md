@@ -40,3 +40,14 @@
   - `bootstrap`
   - `contract-gate`
   - `preview-contract-gate`
+
+## Phase 7 Ticket 29 - Release Evidence Bundle
+- Added CI workflow: `.github/workflows/release-evidence-bundle.yml`.
+- Workflow links release evidence from:
+  - `preview-contract-gate`
+  - `sbom` generation
+  - `security-scan` vulnerability report
+- Added bundle generator `tools/bundle-release-evidence.mjs` that emits:
+  - `.tmp/release-evidence/release-evidence.json`
+  - `.tmp/release-evidence/release-evidence.md`
+  - `.tmp/release-evidence/raw/*` source evidence files

@@ -39,7 +39,10 @@ Define minimum controls for operating Product Generator Wizard in regulated ente
 
 ## Evidence Checklist
 1. Latest passing `generator-contract-gate` run.
-2. Latest passing `security-scan` report.
-3. Latest passing `release:check` output.
-4. Current environment config validation (`npm run config:check`).
-5. Current DR validation (`npm run dr:check`).
+2. Latest passing `preview-contract-gate` run.
+3. Latest passing `security-scan` report.
+4. Latest passing `sbom` artifact.
+5. Latest passing `release-evidence-bundle` artifact (`release-evidence.json` + `release-evidence.md`).
+6. Latest passing `release:check` output.
+7. Current environment config validation (`npm run config:check`).
+8. Current DR validation (`npm run dr:check`).

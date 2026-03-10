@@ -13,7 +13,7 @@
 | REM-009 | Tracked `.test-dist` artifacts | Medium | Open | Frontend | Remove compiled test artifacts from source control and enforce clean generation at test runtime. |
 | REM-010 | Branch protection for preview gate | High | Closed | DevOps | `main` now requires `preview-contract-gate` with strict checks and review enforcement. |
 | REM-011 | Preview threat model publication | Medium | Closed | Security | Published preview threat model with tenant/isolation/retention controls and residual risk tracking. |
-| REM-012 | Release evidence bundling | Medium | Open | DevOps | Attach preview gate/report/SBOM outputs as release evidence package. |
+| REM-012 | Release evidence bundling | Medium | Closed | DevOps | Added release evidence workflow and bundle artifact linking preview gate, SBOM, and security scan outputs. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.
