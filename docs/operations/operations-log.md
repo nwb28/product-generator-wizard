@@ -128,3 +128,8 @@
 - Added apply utility: `tools/apply-branch-protection-baseline.mjs`.
 - Added manual approval-gated workflow: `.github/workflows/branch-protection-remediation.yml`.
 - Workflow requires explicit `apply=true` and runs in `governance-remediation` environment.
+
+## Enterprise Ticket - Retention Observability and Alerting
+- Added `tools/check-retention-purge-slo.mjs` and tests.
+- Added scheduled monitor workflow: `.github/workflows/retention-observability.yml`.
+- Monitor fails if the latest successful purge run is older than 26 hours and opens a deduplicated alert issue.

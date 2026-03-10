@@ -27,6 +27,7 @@
 | REM-023 | CODEOWNERS role model and mandatory owner review gap | Medium | Closed | Tech Lead | Added role-alias-based CODEOWNERS generation and enabled required code-owner review on `main`. |
 | REM-024 | Deploy attestation path regression detection gap | Medium | Closed | DevOps | Added CI verification script ensuring deploy workflow retains attestation run/download/verify steps. |
 | REM-025 | Branch protection remediation runbook automation gap | Medium | Closed | DevOps | Added approval-gated remediation workflow and reusable baseline apply script. |
+| REM-026 | Retention purge observability and stale-run alert gap | Medium | Closed | DevOps | Added scheduled retention observability workflow with stale-run issue alerting. |
 
 ## Burn-Down Result
 1. Legacy MVP remediation items remain closed.

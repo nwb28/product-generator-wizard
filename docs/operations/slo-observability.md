@@ -32,3 +32,8 @@ Required attributes:
 2. Export counters/histograms/spans to central observability backends (Azure Monitor, Datadog, or equivalent).
 3. Keep endpoint-level dashboards per tenant segment and environment.
 4. Review SLO attainment weekly and record action items in `docs/operations/operations-log.md`.
+
+## Retention Purge Freshness SLO
+1. `preview-artifact-retention` must record a successful run within 26 hours.
+2. Monitor freshness with `retention-observability` workflow.
+3. Alert path opens an issue labeled `operations` and `retention` when stale.
