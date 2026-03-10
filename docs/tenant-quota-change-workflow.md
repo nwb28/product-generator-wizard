@@ -7,10 +7,11 @@ Changes to `config/tenant-quotas.json`.
 1. Open PR with quota changes.
 2. `tenant-quota-governance` workflow runs automatically.
 3. Workflow validates config and publishes `.tmp/quota/review.json` artifact.
-4. Required reviewers:
+4. Workflow posts/updates a PR comment containing quota diff markdown.
+5. Required reviewers:
    - service tech lead
    - product/platform SME
-5. Merge only after approval and successful governance check.
+6. Merge only after approval and successful governance check.
 
 ## Audit Trail
 1. PR discussion and review approvals.
