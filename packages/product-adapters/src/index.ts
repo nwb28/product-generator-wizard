@@ -8,6 +8,7 @@ export const ADAPTER_SCHEMA_V1 = '1.0.0' as const;
 export { adaptersIndex, builtProductIntakeSchema, previewSessionSchema, compatibilityReportSchema };
 export { createPilotLoanAdapter, PILOT_ADAPTER_ID, PILOT_ADAPTER_VERSION } from './pilot-adapter.js';
 export { analyzePermissionMatrix } from './permissions.js';
+export { analyzeCanonicalMappingCoverage } from './mapping-coverage.js';
 export { validateBuiltProductIntake, validateBuiltProductWithRegistry } from './validator.js';
 
 export type AdapterSeverity = 'blocking' | 'warning';

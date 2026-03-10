@@ -282,6 +282,8 @@ test('POST /preview/report returns permission matrix coverage for valid payload'
   assert.equal(response.body.recommendation, 'Go');
   assert.equal(response.body.permissionMatrix.bucs.roles, 1);
   assert.equal(response.body.permissionMatrix.company.permissions, 3);
+  assert.equal(response.body.mappingCoverage.coveragePercent, 100);
+  assert.equal(response.body.mappingCoverage.uniqueCanonicalModels, 1);
 });
 
 test('POST /generate returns 429 when tenant-principal key exceeds limit', async () => {

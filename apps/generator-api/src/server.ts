@@ -1,6 +1,7 @@
 import express from 'express';
 import { compileManifest } from '@pgw/packages-compiler/dist/index.js';
 import {
+  analyzeCanonicalMappingCoverage,
   analyzePermissionMatrix,
   createPilotLoanAdapter,
   createProductAdapterRegistry,
@@ -584,8 +585,15 @@ export function createApp(options: AppOptions = {}) {
 
     const validation = validateBuiltProductWithRegistry(req.body as any, productAdapterRegistry);
     const permissionAnalysis = analyzePermissionMatrix((req.body as any).permissions ?? {});
+    const mappingCoverage = analyzeCanonicalMappingCoverage(
+      (((req.body as any).mappings ?? []) as Array<{ canonicalModel?: string; confidence?: number }>).map((entry) => ({
+        canonicalModel: entry.canonicalModel ?? '',
+        confidence: entry.confidence ?? 0
+      }))
+    );
     const combinedBlocking = validation.summary.blocking + permissionAnalysis.summary.blocking;
-    const combinedWarning = validation.summary.warning + permissionAnalysis.summary.warning;
+    const combinedWarning =
+      validation.summary.warning + permissionAnalysis.summary.warning + mappingCoverage.diagnostics.length;
     const readinessScore = Math.max(0, 100 - combinedWarning * 5 - combinedBlocking * 20);
     const recommendation = combinedBlocking > 0 ? 'No-Go' : 'Go';
 
@@ -605,6 +613,11 @@ export function createApp(options: AppOptions = {}) {
       },
       diagnostics: [...validation.diagnostics, ...permissionAnalysis.diagnostics],
       permissionMatrix: permissionAnalysis.coverage,
+      mappingCoverage: {
+        coveragePercent: mappingCoverage.coveragePercent,
+        uniqueCanonicalModels: mappingCoverage.uniqueCanonicalModels,
+        lowConfidenceCount: mappingCoverage.lowConfidenceCount
+      },
       readinessScore,
       recommendation
     });
